@@ -1,0 +1,111 @@
+{#
+Copyright(c) Nobuhiko Kimoto All Rights Reserved.
+
+https://nob-log.info
+
+For the full copyright and license information, please view the LICENSE
+file that was distributed with this source code.
+#}
+{% extends '@admin/default_frame.twig' %}
+
+{% set menus = ['store', 'plugin', 'plugin_list'] %}
+
+{% block title %}データ移行プラグイン{% endblock %}
+{% block sub_title %}{% endblock %}
+
+{% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}
+
+{% block javascript %}
+    <script src="{{ asset('assets/js/vendor/spin.min.js', 'admin') }}"></script>
+    <script>
+        $(function() {
+            var opts = {
+                lines: 13,
+                length: 30,
+                width: 2,
+                radius: 12,
+                corners: 1,
+                rotate: 0,
+                direction: 1,
+                color: '#BBB',
+                speed: 1,
+                trail: 67,
+                shadow: true,
+                hwaccel: false,
+                className: 'spinner',
+                zIndex: 2e9,
+                top: top
+            };
+
+            ImageSpinner = new Spinner(opts).spin(document.getElementById('spinner'));
+            ImageSpinner.stop();
+
+            $('#upload-form').submit(function() {
+                $('#upload-button').attr('disabled', 'disabled');
+                $('#download-button').attr('disabled', 'disabled');
+                ImageSpinner.spin(document.getElementById('spinner'));
+            });
+        });
+    </script>
+{% endblock javascript %}
+
+{% block main %}
+    <form enctype="multipart/form-data" id="upload-form" method="post" action="{{ url('data_migration4_admin_config') }}">
+
+        {{ form_widget(form._token) }}
+
+        <div class="c-contentsArea__cols">
+            <div class="c-contentsArea__primaryCol">
+                <div class="c-primaryCol">
+                    <div class="card rounded border-0 mb-4">
+                        <div class="alert alert-warning" role="alert">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Error:</span>
+                            <strong>2系のバックアップファイルを使用して、データを復元します。</strong>
+                            <ul>
+                                <li>・会員データ</li>
+                                <li>・管理者ログイン情報</li>
+                                <li>・商品データ</li>
+                                <li>・カテゴリー</li>
+                                <li>全て上書きします。実施前にバックアップをお取りください。</li>
+                                <li>登録後、ECCUBE_AUTH_MAGICを旧サイトのAUTH_MAGICで上書きする必要があります、先にご用意ください。</li>
+                            </ul>
+                            <dl class="dl-horizontal">
+                                <dt>ECCUBE_AUTH_MAGICの場所</dt><dd>.env</dd>
+                                <dt>AUTH_MAGICの場所(2.4.4)</dt><dd>data/cache/mtb_constants.php</dd>
+                                <dt>AUTH_MAGICの場所(2.11以降)</dt><dd>data/config/config.php</dd>
+                            </dl>
+                        </div>
+                        <div id="ex-csv_product-upload" class="card-body">
+                            <div class="row">
+                                <div class="col-2"><span>バックアップファイル</span></div>
+                                <div class="col">
+                                        {{ form_widget(form.import_file, {'attr': {'accept': 'application/zip,application/x-tar,application/x-gzip'}}) }}
+                                        {{ form_errors(form.import_file) }}
+                                        <br/>
+                                        <button class="btn btn-ec-conversion" type="submit" id="upload-button">Upload</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="c-conversionArea">
+            <div class="c-conversionArea__container">
+                <div class="row justify-content-between align-items-center">
+                    <div class="col-6">
+                        <div class="c-conversionArea__leftBlockItem">
+                            <a class="c-beseLink"
+                               href="{{ url('admin_store_plugin') }}">
+                                <i class="fa fa-backward" aria-hidden="true"></i>
+                                <span>back</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
