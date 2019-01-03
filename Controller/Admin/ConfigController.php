@@ -1112,7 +1112,12 @@ class ConfigController extends AbstractController
                         }
                         $value['order_item_type_id'] = 1; // 商品で固定する
                         $value['currency_code'] = 'JPY'; // とりあえず固定
-                        $value['shipping_id'] = $this->shipping_id[$data['order_id']][0];
+
+                        if (isset($this->shipping_id[$data['order_id']][0])) {
+                            $value['shipping_id'] = $this->shipping_id[$data['order_id']][0];
+                        } else {
+                            $value['shipping_id'] = NULL; // ダウンロード販売
+                        }
                         break;
                 }
 
