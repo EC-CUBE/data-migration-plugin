@@ -1110,6 +1110,7 @@ class ConfigController extends AbstractController
                         if (!empty($data['price']) && !empty($data['tax_rate']) && !empty($data['quantity'])) {
                             $value['tax'] = round($data['price'] * $data['tax_rate']/100) * $data['quantity'];
                         }
+
                         $value['order_item_type_id'] = 1; // 商品で固定する
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
@@ -1173,6 +1174,8 @@ class ConfigController extends AbstractController
                     break;
                 }
                 $data['price'] = $value;
+                $data['tax'] = 0;
+                $data['tax_rate'] = 0;
                 $data['quantity'] = 1;
                 $data['id'] = $i;
                 $data['shipping_id'] = $this->shipping_id[$order_id][0];
