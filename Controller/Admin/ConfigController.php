@@ -124,8 +124,8 @@ class ConfigController extends AbstractController
             //$index = $this->saveTo($em, $csvDir, 'dtb_customer', 'dtb_customer_address'); // 3と仕様が違う
             $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
 
-            //$this->saveToC($em, $csvDir, 'mtb_authority', null, true);
-            //$this->saveToC($em, $csvDir, 'dtb_member', null, true);
+            $this->saveToC($em, $csvDir, 'mtb_authority', null, true);
+            $this->saveToC($em, $csvDir, 'dtb_member', null, true);
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
