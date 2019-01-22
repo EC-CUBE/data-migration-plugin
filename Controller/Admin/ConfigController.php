@@ -568,6 +568,11 @@ class ConfigController extends AbstractController
                 $value['deliv_time_id'] = isset($data['deliv_time_id']) ? $data['deliv_time_id'] : NULL;
                 $value['shipping_id'] = 0;
                 $value['rank'] = 0;
+                if (!empty($value['shipping_date'])) {
+                    // 変な文字が来る 18/12/29(土)
+                    preg_match_all('/[\d.]+/', $value['shipping_date'], $matches);
+                    $value['shipping_date'] = date("Y-m-d", mktime(0, 0, 0, $matches[0][1], $matches[0][2], '20'.$matches[0][0]));
+                }
                 $value['del_flg'] = $data['del_flg'];
                 $value['order_id'] = $data['order_id'];
                 $value['create_date'] = $data['create_date'];
@@ -1005,6 +1010,8 @@ class ConfigController extends AbstractController
                         // --> shipping
                     } elseif ($column == 'delivery_date') {
                         $value[$column] = empty($data['date']) ? NULL : $data['date'];
+                    } elseif ($column == 'shipping_date') {
+                        $value[$column] = empty($data['commit_date']) ? NULL : $data['commit_date'];
 
                     } elseif ($column == 'visible' /*&& $tableName == 'dtb_payment'*/) {
                         $value[$column] = 0;
@@ -1023,7 +1030,7 @@ class ConfigController extends AbstractController
 
                         // --> payment
                     } elseif ($column == 'fixed') {
-                        $value[$column] = isset($data['fix'])?$data['fix']:1;
+                        $value[$column] = 1;
 
                         // --> dtb_order_item
                     } elseif ($column == 'class_category_name1') {
@@ -1090,6 +1097,7 @@ class ConfigController extends AbstractController
 
                         $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']])?$this->delivery_id[$value['order_id']]:NULL;
                         $value['delivery_time'] = empty($data['time']) ? NULL : $data['time'];
+
                         break;
 
                     case 'dtb_tax_rule':
