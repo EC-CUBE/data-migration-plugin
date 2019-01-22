@@ -1020,6 +1020,11 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_time') {
                         $value[$column] = isset($data['deliv_time'])?$data['deliv_time']:NULL;
 
+
+                        // --> payment
+                    } elseif ($column == 'fixed') {
+                        $value[$column] = isset($data['fix'])?$data['fix']:1;
+
                         // --> dtb_order_item
                     } elseif ($column == 'class_category_name1') {
                         $value[$column] = isset($data['classcategory_name1'])?$data['classcategory_name1']:NULL;
