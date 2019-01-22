@@ -565,7 +565,7 @@ class ConfigController extends AbstractController
                     $value[str_replace('deliv_', 'shipping_', $k)] = $v;
                 }
 
-                $value['deliv_time_id'] = $data['deliv_time_id'];
+                $value['deliv_time_id'] = isset($data['deliv_time_id']) ? $data['deliv_time_id'] : NULL;
                 $value['shipping_id'] = 0;
                 $value['rank'] = 0;
                 $value['del_flg'] = $data['del_flg'];
@@ -980,6 +980,11 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'order_status_id') {
                         // 退会が追加された
                         $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
+
+                        // 4系に存在しないstatusなので
+                        if ($data['status'] == 2) {
+                            $value[$column] = NULL;
+                        }
 
                     } elseif ($column == 'postal_code') {
                         $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0 , 8); //
