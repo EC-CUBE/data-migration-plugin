@@ -86,7 +86,7 @@ file that was distributed with this source code.
                                         {{ form_widget(form.import_file, {'attr': {'accept': 'application/zip,application/x-tar,application/x-gzip'}}) }}
                                         {{ form_errors(form.import_file) }}
                                         <br/>
-                                        <button class="btn btn-ec-conversion" type="submit" id="upload-button">Upload</button>
+                                        <button class="btn btn-ec-conversion" type="submit" id="upload-button">Upload</button> (最大 {{ max_upload_size }})
                                     </form>
                                 </div>
                             </div>

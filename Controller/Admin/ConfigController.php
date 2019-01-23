@@ -98,6 +98,7 @@ class ConfigController extends AbstractController
 
         return [
             'form' => $form->createView(),
+            'max_upload_size' => self::checkUploadSize(),
         ];
     }
 
@@ -1222,6 +1223,19 @@ class ConfigController extends AbstractController
         if (count($builder->getValues()) > 0) {
             $builder->execute();
             sleep(1);
+        }
+    }
+
+    private function checkUploadSize()
+    {
+        if (! $filesize = ini_get('upload_max_filesize')) {
+            $filesize = "5M";
+        }
+
+        if ($postsize = ini_get('post_max_size')) {
+            return min($filesize, $postsize);
+        } else {
+            return $filesize;
         }
     }
 }
