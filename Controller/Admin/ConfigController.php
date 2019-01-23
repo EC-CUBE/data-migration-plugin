@@ -126,7 +126,7 @@ class ConfigController extends AbstractController
             $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
 
             $this->saveToC($em, $csvDir, 'mtb_authority', null, true);
-            $this->saveToC($em, $csvDir, 'dtb_member', null, true);
+            //$this->saveToC($em, $csvDir, 'dtb_member', null, true);
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
@@ -146,7 +146,7 @@ class ConfigController extends AbstractController
     private function saveToC($em, $tmpDir, $csvName, $tableName = null, $allow_zero = false, $i = 1) {
 
         $tableName = ($tableName)?$tableName:$csvName;
-        $em->exec('DELETE FROM ' . $tableName);
+        $this->resetTable($em, $tableName);
 
         if (file_exists($tmpDir.$csvName.'.csv') == false) {
             // 無視する
@@ -325,7 +325,7 @@ class ConfigController extends AbstractController
     private function saveToP($em, $tmpDir, $csvName, $tableName = null, $allow_zero = false, $i = 1) {
 
         $tableName = ($tableName)?$tableName:$csvName;
-        $em->exec('DELETE FROM ' . $tableName);
+        $this->resetTable($em, $tableName);
 
         if (file_exists($tmpDir.$csvName.'.csv') == false) {
             // 無視する
@@ -921,7 +921,7 @@ class ConfigController extends AbstractController
     private function saveToO($em, $tmpDir, $csvName, $tableName = null, $allow_zero = false, $i = 1) {
 
         $tableName = ($tableName)?$tableName:$csvName;
-        $em->exec('DELETE FROM ' . $tableName);
+        $this->resetTable($em, $tableName);
 
         if (file_exists($tmpDir.$csvName.'.csv') == false) {
             // 無視する
@@ -1232,6 +1232,18 @@ class ConfigController extends AbstractController
             return min($filesize, $postsize);
         } else {
             return $filesize;
+        }
+    }
+
+    private function resetTable($em, $tableName)
+    {
+        $platform = $em->getDatabasePlatform()->getName();
+
+        if ($platform == 'mysql') {
+            $em->exec('TRUNCATE TABLE ' . $tableName);
+        } else {
+
+            $em->exec('DELETE FROM ' . $tableName);
         }
     }
 }
