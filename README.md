@@ -40,6 +40,7 @@ ec-cube2系から出力出来るバックアップデータを利用して、2�
  - dtb_cart_item
 ### 決済と配送の紐づけ
  - dtb_payment_option
+### 決済モジュール
 
 ## :exclamation: 注意点
 - プラグイン内でcomposerを使用しているため、オーナーズストア経由のインストールが必要になります
