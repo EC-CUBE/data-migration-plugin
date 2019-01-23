@@ -38,7 +38,7 @@ ec-cube2系から出力出来るバックアップデータを利用して、2�
 ### カート
  - dtb_cart
  - dtb_cart_item
-### 決済モジュール
+### 決済と配送の紐づけ
  - dtb_payment_option
 
 ## :exclamation: 注意点
