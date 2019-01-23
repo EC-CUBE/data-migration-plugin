@@ -1111,10 +1111,6 @@ class ConfigController extends AbstractController
                         break;
 
                     case 'dtb_order_item':
-                        dump($data);
-                        dump($value);
-                        die();
-
                         if (isset($data['order_detail_id'])) {
                             $value['id'] = $data['order_detail_id'];
                         } else {
