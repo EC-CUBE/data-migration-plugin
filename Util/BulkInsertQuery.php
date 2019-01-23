@@ -138,8 +138,14 @@ class BulkInsertQuery
         // (?, ?), ... , (?, ?)
         $placeholders = implode(', ', array_fill(0, count($this->valueSets), $singlePlaceholder));
 
+        // fixme integrity constraint violation 1062 duplicate entry for key 対策
+        if ($platform->getName() == 'mysql') {
+            $query = 'REPLACE INTO %s %s VALUES %s;';
+        } else {
+            $query = 'INSERT INTO %s %s VALUES %s;';
+        }
         $sql = sprintf(
-            'INSERT INTO %s %s VALUES %s;',
+            $query,
             $this->table->getQuotedName($platform),
             $columnString,
             $placeholders
