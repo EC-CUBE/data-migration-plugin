@@ -989,7 +989,7 @@ class ConfigController extends AbstractController
 
                         // 4系に存在しないstatusなので
                         if ($data['status'] == 2) {
-                            $value[$column] = NULL;
+                            $value[$column] = 4;
                         }
 
                     } elseif ($column == 'postal_code') {
