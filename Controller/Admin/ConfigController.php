@@ -412,6 +412,7 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_fee') {
                         $value[$column] = isset($data['delivery_fee'])?$data['delivery_fee']:NULL;
 
+
                     } elseif ($column == 'stock') {
                         $value[$column] = !empty($data['stock'])?$data['stock']:NULL;
 
@@ -1027,7 +1028,8 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_time') {
                         $value[$column] = isset($data['deliv_time'])?$data['deliv_time']:NULL;
 
-
+                    } elseif ($column == 'fee') {
+                        $value[$column] = !empty($data['fee'])?$data['fee']:0;
                         // --> payment
                     } elseif ($column == 'fixed') {
                         $value[$column] = 1;
