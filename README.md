@@ -24,9 +24,9 @@ ec-cube2系から出力出来るバックアップデータを利用して、2�
  - dtb_shipping
  - dtb_order_item
 ### 支払い方法
- - dtb_payment
+ - dtb_payment ※データは移行するが非表示設定
 ### 配送方法
- - dtb_delivery
+ - dtb_delivery ※データは移行するが非表示設定
  - dtb_delivery_fee
  - dtb_delivery_time
 ### 税設定
@@ -44,6 +44,7 @@ ec-cube2系から出力出来るバックアップデータを利用して、2�
 
 ## :exclamation: 注意点
 - プラグイン内でcomposerを使用しているため、オーナーズストア経由のインストールが必要になります
+- 新規に使う支払い方法と配送方法を設定する必要があります
 - 複数配送は移行できません
 - ダウンロード商品の受注データは移行できません
 - ダウンロード商品も移行できません
