@@ -286,7 +286,9 @@ class ConfigController extends AbstractController
             $this->saveToP($em, $csvDir, 'dtb_category');
             $this->saveToP($em, $csvDir, 'dtb_product_categories', 'dtb_product_category');
 
-            $this->saveToP($em, $csvDir, 'mtb_product_type', 'mtb_sale_type', true);
+            if (file_exists($csvDir.'mtb_product_type.csv')) {
+                $this->saveToP($em, $csvDir, 'mtb_product_type', 'mtb_sale_type', true);
+            }
 
             // 在庫
             $this->saveStock($em);
