@@ -929,6 +929,7 @@ class ConfigController extends AbstractController
         }
         if (filesize($tmpDir.$csvName.'.csv') == 0) {
             // 無視する
+            $this->addWarning($csvName.'.csv のデータがありません。' , 'admin');
             return;
         }
 
@@ -1109,6 +1110,10 @@ class ConfigController extends AbstractController
                         break;
 
                     case 'dtb_order_item':
+                        dump($data);
+                        dump($value);
+                        die();
+
                         if (isset($data['order_detail_id'])) {
                             $value['id'] = $data['order_detail_id'];
                         } else {
@@ -1139,6 +1144,7 @@ class ConfigController extends AbstractController
                         } else {
                             $value['shipping_id'] = NULL; // ダウンロード販売
                         }
+
                         break;
                 }
 
