@@ -1,7 +1,16 @@
 <?php
+
 /*
- * @see https://gist.github.com/gskema/a182aaf7cc04001aebba9c1aad86b40b
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) LOCKON CO.,LTD. All Rights Reserved.
+ *
+ * http://www.lockon.co.jp/
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
+
 namespace Plugin\DataMigration4\Util;
 
 use Doctrine\DBAL\Connection;
@@ -9,8 +18,6 @@ use Doctrine\DBAL\Schema\Identifier;
 
 /**
  * Class BulkInsertQuery
- *
- * @package YourApp\Repository\Query
  */
 class BulkInsertQuery
 {
@@ -46,7 +53,7 @@ class BulkInsertQuery
         string     $table
     ) {
         $this->connection = $connection;
-        $this->table      = new Identifier($table);
+        $this->table = new Identifier($table);
     }
 
     /**
@@ -68,11 +75,10 @@ class BulkInsertQuery
      */
     public function setValues(array $valueSets)
     {
-        $this->valueSets[] =  $valueSets;
+        $this->valueSets[] = $valueSets;
 
         return $this;
     }
-
 
     public function getValues()
     {
@@ -87,7 +93,7 @@ class BulkInsertQuery
         $sql = $this->getSQL();
 
         $parameters = [];
-        foreach($this->valueSets as $valueSet) {
+        foreach ($this->valueSets as $valueSet) {
             $parameters = array_merge($parameters, array_values($valueSet));
         }
 
@@ -168,7 +174,7 @@ class BulkInsertQuery
         $repeat = count($this->valueSets);
 
         $positionalTypes = [];
-        for ($i=1; $i<=$repeat; $i++) {
+        for ($i = 1; $i <= $repeat; $i++) {
             $positionalTypes = array_merge($positionalTypes, $types);
         }
 
