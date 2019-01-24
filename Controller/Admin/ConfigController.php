@@ -83,8 +83,6 @@ class ConfigController extends AbstractController
             $this->saveProduct($em, $csvDir);
             $this->saveOrder($em, $csvDir);
 
-            // todo 送料など
-
             // 削除
             $fs = new Filesystem();
             $fs->remove($tmpDir);
@@ -833,7 +831,7 @@ class ConfigController extends AbstractController
             // todo mtb_order_status.display_order_count
 
             $this->saveToO($em, $csvDir, 'dtb_order');
-            $this->saveToO($em, $csvDir, 'dtb_shipping'); // todo 2.4.4
+            $this->saveToO($em, $csvDir, 'dtb_shipping');
 
             $this->saveToO($em, $csvDir, 'dtb_payment');
             $this->saveToO($em, $csvDir, 'dtb_deliv', 'dtb_delivery');
@@ -844,6 +842,7 @@ class ConfigController extends AbstractController
             $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item');
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
 
+            // todo 商品別税率設定
             $this->saveToO($em, $csvDir, 'dtb_tax_rule');
 
             if (!empty($this->order_item)) {
