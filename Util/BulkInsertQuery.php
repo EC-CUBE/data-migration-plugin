@@ -1,14 +1,6 @@
 <?php
-
 /*
- * This file is part of EC-CUBE
- *
- * Copyright(c) LOCKON CO.,LTD. All Rights Reserved.
- *
- * http://www.lockon.co.jp/
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * @see https://gist.github.com/gskema/a182aaf7cc04001aebba9c1aad86b40b
  */
 
 namespace Plugin\DataMigration4\Util;
