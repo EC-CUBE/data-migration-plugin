@@ -1,5 +1,6 @@
 # データ移行プラグイン for EC-CUBE4
 ec-cube2系から出力出来るバックアップデータを利用して、2系から4系へのデータ移行をするプラグイン
+https://www.ec-cube.net/products/detail.php?product_id=1804
 
 ## :sunny: 移行出来るデータ
 ### 会員データ
