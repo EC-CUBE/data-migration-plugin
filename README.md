@@ -45,6 +45,7 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
 ### 決済モジュール
 
 ## :exclamation: 注意点
+- アップロードファイルの最大容量はPHPの設定に依存します。(memory_limit, post_max_size, upload_max_filesize)
 - プラグイン内でcomposerを使用しているため、オーナーズストア経由のインストールが必要になります
 - 新規に使う支払い方法と配送方法を設定する必要があります
 - 複数配送は移行できません
