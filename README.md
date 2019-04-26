@@ -53,8 +53,8 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
 - ダウンロード商品の受注データは移行できません
 - ダウンロード商品も移行できません
 
-## :point_right: 今後の予定
-- 他のプラグインとの連携
+## :point_right: 他プラグイン連携
+- [メルマガ管理プラグイン](https://www.ec-cube.net/products/detail.php?product_id=1760)
 
 ## License
 [LGPL](LICENSE)
