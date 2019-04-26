@@ -33,6 +33,8 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
  - dtb_delivery_time
 ### 税設定
  - dtb_tax_rule
+### :point_right: 他プラグイン連携
+- [メルマガ管理プラグイン](https://www.ec-cube.net/products/detail.php?product_id=1760)
 
 ## :cloud: 移行出来ないデータ
 ### 商品画像
@@ -52,9 +54,6 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
 - 複数配送は移行できません
 - ダウンロード商品の受注データは移行できません
 - ダウンロード商品も移行できません
-
-## :point_right: 他プラグイン連携
-- [メルマガ管理プラグイン](https://www.ec-cube.net/products/detail.php?product_id=1760)
 
 ## License
 [LGPL](LICENSE)
