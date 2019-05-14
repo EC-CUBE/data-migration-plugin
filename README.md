@@ -34,7 +34,7 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
 ### 税設定
  - dtb_tax_rule
 ### :point_right: 他プラグイン連携
-- [メルマガ管理プラグイン](https://www.ec-cube.net/products/detail.php?product_id=1760)
+- 会員データ メールマガジン送付について [メルマガ管理プラグイン](https://www.ec-cube.net/products/detail.php?product_id=1760)
 
 ## :cloud: 移行出来ないデータ
 ### 商品画像
