@@ -983,6 +983,10 @@ class ConfigController extends AbstractController
                     // --> payment
                     } elseif ($column == 'fixed') {
                         $value[$column] = 1;
+                    } elseif ($column == 'rule_max') { // 2.13
+                        $value[$column] = !empty($data['upper_rule']) ? $data['upper_rule'] : null;
+                    } elseif ($column == 'rule_min') { // 2.13
+                        $value[$column] = !empty($data['rule_max']) ? $data['rule_max'] : null;
 
                     // --> dtb_order_item
                     } elseif ($column == 'class_category_name1') {
