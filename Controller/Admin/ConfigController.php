@@ -220,7 +220,7 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'creator_id') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
                     } elseif ($column == 'plg_mailmagazine_flg') {
-                        $value[$column] = empty($data['mailmaga_flg']) ? 0 : 1; // メルマガプラグイン
+                        $value[$column] = (!empty($data['mailmaga_flg']) && $data['mailmaga_flg'] != 3) ? 1 : 0; // メルマガプラグイン
                     } elseif ($column == 'id' && $tableName == 'dtb_member') {
                         $value[$column] = $data['member_id'];
                     } elseif ($column == 'id' && $tableName == 'dtb_customer_address') {
