@@ -106,7 +106,7 @@ class ConfigController extends AbstractController
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 0;');
-                $em->exec("SET SESSION sql_mode = ''"); // STRICT_TRANS_TABLESを無効にする。
+                $em->exec("SET SESSION sql_mode = 'NO_AUTO_VALUE_ON_ZERO'"); // STRICT_TRANS_TABLESを無効にする。
             } else {
                 $em->exec('SET session_replication_role = replica;'); // need super user
             }
@@ -117,8 +117,8 @@ class ConfigController extends AbstractController
             //$index = $this->saveTo($em, $csvDir, 'dtb_customer', 'dtb_customer_address'); // 3と仕様が違う
             $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
 
-            $this->saveToC($em, $csvDir, 'mtb_authority', null, true);
-            $this->saveToC($em, $csvDir, 'dtb_member', null, true);
+            //$this->saveToC($em, $csvDir, 'mtb_authority', null, true);
+            //$this->saveToC($em, $csvDir, 'dtb_member', null, true);
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
@@ -263,7 +263,7 @@ class ConfigController extends AbstractController
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 0;');
-                $em->exec("SET SESSION sql_mode = ''"); // STRICT_TRANS_TABLESを無効にする。
+                $em->exec("SET SESSION sql_mode = 'NO_AUTO_VALUE_ON_ZERO'"); // STRICT_TRANS_TABLESを無効にする。
             } else {
                 $em->exec('SET session_replication_role = replica;');
             }
@@ -825,7 +825,7 @@ class ConfigController extends AbstractController
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 0;');
-                $em->exec("SET SESSION sql_mode = ''"); // STRICT_TRANS_TABLESを無効にする。
+                $em->exec("SET SESSION sql_mode = 'NO_AUTO_VALUE_ON_ZERO'"); // STRICT_TRANS_TABLESを無効にする。
             } else {
                 $em->exec('SET session_replication_role = replica;'); // need super user
             }
@@ -1066,7 +1066,7 @@ class ConfigController extends AbstractController
                         $value['tax_type_id'] = 1;
                         $value['tax_display_type_id'] = 1;
 
-                        $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : 1;
+                        $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : NULL;
 
                         // 2.4.4
                         if (isset($this->baseinfo['tax'])) {
