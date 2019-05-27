@@ -59,13 +59,12 @@ class ConfigController extends AbstractController
             $archive->extractNode($tmpDir);
             $fileNames = $archive->getFileNames();
 
+            $this->flag_244 = false;
             // 2.4.4系の場合の処理
             if ($archive->getFileData($fileNames[0].'bkup_data.csv')) {
                 $csvDir = $tmpDir.'/'.$fileNames[0];
                 $this->cutOff24($csvDir, 'bkup_data.csv');
 
-                // 税率など
-                $this->fix24baseinfo($em, $csvDir);
                 // create dtb_shipping
                 $this->fix24Shipping($em, $csvDir);
 
@@ -73,12 +72,20 @@ class ConfigController extends AbstractController
                 if (file_exists($csvDir.'dtb_products_class.csv')) {
                     // 2.11の場合は通さない
                     if (!file_exists($csvDir.'dtb_class_combination.csv')) {
+                        $this->flag_244 = true;
                         $this->fix24ProductsClass($em, $csvDir);
                     }
                 }
             } else {
                 $csvDir = $tmpDir.'/';
             }
+
+            // 2.13以外全部
+            if (!file_exists($csvDir.'dtb_tax_rule.csv')) {
+                // 税率など
+                $this->fix24baseinfo($em, $csvDir);
+            }
+
             $this->saveCustomer($em, $csvDir);
             $this->saveProduct($em, $csvDir);
             $this->saveOrder($em, $csvDir);
@@ -1068,10 +1075,14 @@ class ConfigController extends AbstractController
 
                         $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : NULL;
 
-                        // 2.4.4
+                        // 2.4.4, 2.11, 2.12
                         if (isset($this->baseinfo['tax'])) {
                             $value['tax_rate'] = $data['tax_rate'] = $this->baseinfo['tax'];
                             $data['point_rate'] = $this->baseinfo['point_rate'];
+                        }
+
+                        // 2.4.4
+                        if ($this->flag_244) {
                             $value['product_class_id'] = $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']];
                         }
 
