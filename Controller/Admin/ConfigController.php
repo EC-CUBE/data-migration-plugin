@@ -125,8 +125,8 @@ class ConfigController extends AbstractController
             //$index = $this->saveTo($em, $csvDir, 'dtb_customer', 'dtb_customer_address'); // 3と仕様が違う
             $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
 
-            //$this->saveToC($em, $csvDir, 'mtb_authority', null, true);
-            //$this->saveToC($em, $csvDir, 'dtb_member', null, true);
+            $this->saveToC($em, $csvDir, 'mtb_authority', null, true);
+            $this->saveToC($em, $csvDir, 'dtb_member', null, true);
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
@@ -403,13 +403,13 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'class_category_id1') {
                         $value[$column] = !empty($data['classcategory_id1']) ? $data['classcategory_id1'] : null;
 
-                        if (!empty($this->dtb_class_combination)) {
+                        if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
                             $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id1'];
                         }
                     } elseif ($column == 'class_category_id2') {
                         $value[$column] = !empty($data['classcategory_id2']) ? $data['classcategory_id2'] : null;
 
-                        if (!empty($this->dtb_class_combination)) {
+                        if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
                             $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id2'];
                         }
                     } elseif ($column == 'delivery_fee') {
@@ -472,7 +472,9 @@ class ConfigController extends AbstractController
                         $value['delivery_duration_id'] = !empty($this->delivery_id[$value['product_id']]) ? $this->delivery_id[$value['product_id']] : null;
 
                         // 244用
-                        $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']] = $data['product_class_id'];
+                        if ($this->flag_244) {
+                            $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']] = $data['product_class_id'];
+                        }
 
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
@@ -781,6 +783,7 @@ class ConfigController extends AbstractController
                         case 'dtb_class_combination':
                         case 'dtb_order':
                         case 'dtb_order_detail':
+                        case 'dtb_mail_history':
                             $tableName = $row[0];
                             $allow_zero = false;
                             $tbl_flg = true;
