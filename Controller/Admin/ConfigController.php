@@ -4,6 +4,7 @@ namespace Plugin\DataMigration4\Controller\Admin;
 
 use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
+use Eccube\Util\StringUtil;
 use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
 use Plugin\DataMigration4\Util\BulkInsertQuery;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -180,7 +181,9 @@ class ConfigController extends AbstractController
 
                 // 物理削除になったので
                 if (isset($data['del_flg']) && $data['del_flg'] == 1) {
-                    continue;
+                    if (!$tableName == 'dtb_customer') {
+                        continue;
+                    }
                 }
 
                 // Schemaにあわせた配列を作成する
@@ -210,7 +213,14 @@ class ConfigController extends AbstractController
                         $value[$column] = $data['work'];
                     } elseif ($column == 'authority_id') {
                         $value[$column] = $data['authority'];
-                    } elseif ($column == 'email' || $column == 'password' || $column == 'name01' || $column == 'name02') {
+                    } elseif ($column == 'email') {
+                        // 退会時はランダムな値に更新
+                        if ($data['del_flg'] == 1) {
+                            $value[$column] = StringUtil::random(60).'@dummy.dummy';
+                        } else {
+                            $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
+                        }
+                    } elseif ($column == 'password' || $column == 'name01' || $column == 'name02') {
                         $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
                     } elseif ($column == 'sort_no') {
                         $value[$column] = $data['rank'];
@@ -847,6 +857,8 @@ class ConfigController extends AbstractController
             $this->saveToO($em, $csvDir, 'dtb_delivfee', 'dtb_delivery_fee');
             $this->saveToO($em, $csvDir, 'dtb_delivtime', 'dtb_delivery_time');
 
+            $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
+
             // todo ダウンロード販売の処理
             $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item');
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
@@ -997,9 +1009,9 @@ class ConfigController extends AbstractController
 
                     // --> dtb_order_item
                     } elseif ($column == 'class_category_name1') {
-                        $value[$column] = isset($data['classcategory_name1']) ? $data['classcategory_name1'] : null;
+                        $value[$column] = isset($data['classcategory_name1']) && strlen($data['classcategory_name1']) > 0 ? $data['classcategory_name1'] : null;
                     } elseif ($column == 'class_category_name2') {
-                        $value[$column] = isset($data['classcategory_name2']) ? $data['classcategory_name2'] : null;
+                        $value[$column] = isset($data['classcategory_name2']) && strlen($data['classcategory_name2']) > 0 ? $data['classcategory_name2'] : null;
                     } elseif ($column == 'name01' || $column == 'name02') {
                         $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
                     } elseif ($column == 'sort_no' && $tableName == 'dtb_shipping') {
@@ -1008,7 +1020,7 @@ class ConfigController extends AbstractController
                         $value[$column] = isset($data['rank']) ? $data['rank'] : 0;
                     } elseif ($column == 'create_date' || $column == 'update_date') {
                         $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : date('Y-m-d H:i:s');
-                    } elseif ($column == 'payment_date' || $column == 'order_date') {
+                    } elseif ($column == 'payment_date') {
                         $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : null;
                     } elseif ($column == 'creator_id') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
@@ -1035,6 +1047,8 @@ class ConfigController extends AbstractController
                         if (isset($data['deliv_id'])) {
                             $this->delivery_id[$data['id']] = $data['deliv_id'];
                         }
+                        $value['order_no'] = $data['id'];
+                        $value['order_date'] = $data['create_date'];
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
                         if ($data['deliv_fee'] > 0) {
@@ -1046,6 +1060,10 @@ class ConfigController extends AbstractController
                         if ($data['discount'] > 0) {
                             $this->order_item[$data['id']]['discount'] = $data['discount'];
                         }
+
+                        // shippingに紐付けるデータを保持
+                        $this->shipping_order[$data['id']] = $data;
+
                         break;
 
                     case 'dtb_shipping':
@@ -1054,6 +1072,13 @@ class ConfigController extends AbstractController
 
                         $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
                         $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
+
+                        // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
+                        if (!empty($data['shipping_commit_date'])) {
+                            $value['shipping_date'] = $data['shipping_commit_date'];
+                        } elseif (!empty($this->shipping_order[$data['order_id']]['commit_date'])) {
+                            $value['shipping_date'] = $this->shipping_order[$data['order_id']]['commit_date'];
+                        }
 
                         break;
 
@@ -1098,6 +1123,15 @@ class ConfigController extends AbstractController
                         } else {
                             $value['shipping_id'] = null; // ダウンロード販売
                         }
+
+                        break;
+
+                    case 'dtb_mail_history':
+                        $value['id'] = $data['send_id'];
+                        $value['order_id'] = $data['order_id'];
+                        $value['send_date'] = $data['send_date'];
+                        $value['mail_subject'] = $data['subject'];
+                        $value['mail_body'] = $data['mail_body'];
 
                         break;
                 }
@@ -1156,7 +1190,9 @@ class ConfigController extends AbstractController
                 $data['tax_rate'] = 0;
                 $data['quantity'] = 1;
                 $data['id'] = $i;
-                $data['shipping_id'] = $this->shipping_id[$order_id][0];
+                if (isset($this->shipping_id[$order_id][0])) {
+                    $data['shipping_id'] = $this->shipping_id[$order_id][0];
+                }
                 $data['order_id'] = $order_id;
                 $data['tax_type_id'] = 1;
                 $data['rounding_type_id'] = 1;
