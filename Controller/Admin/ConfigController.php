@@ -857,6 +857,8 @@ class ConfigController extends AbstractController
             $this->saveToO($em, $csvDir, 'dtb_delivfee', 'dtb_delivery_fee');
             $this->saveToO($em, $csvDir, 'dtb_delivtime', 'dtb_delivery_time');
 
+            $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
+
             // todo ダウンロード販売の処理
             $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item');
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
@@ -1121,6 +1123,15 @@ class ConfigController extends AbstractController
                         } else {
                             $value['shipping_id'] = null; // ダウンロード販売
                         }
+
+                        break;
+
+                    case 'dtb_mail_history':
+                        $value['id'] = $data['send_id'];
+                        $value['order_id'] = $data['order_id'];
+                        $value['send_date'] = $data['send_date'];
+                        $value['mail_subject'] = $data['subject'];
+                        $value['mail_body'] = $data['mail_body'];
 
                         break;
                 }
