@@ -1007,9 +1007,9 @@ class ConfigController extends AbstractController
 
                     // --> dtb_order_item
                     } elseif ($column == 'class_category_name1') {
-                        $value[$column] = isset($data['classcategory_name1']) ? $data['classcategory_name1'] : null;
+                        $value[$column] = isset($data['classcategory_name1']) && strlen($data['classcategory_name1']) > 0 ? $data['classcategory_name1'] : null;
                     } elseif ($column == 'class_category_name2') {
-                        $value[$column] = isset($data['classcategory_name2']) ? $data['classcategory_name2'] : null;
+                        $value[$column] = isset($data['classcategory_name2']) && strlen($data['classcategory_name2']) > 0 ? $data['classcategory_name2'] : null;
                     } elseif ($column == 'name01' || $column == 'name02') {
                         $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
                     } elseif ($column == 'sort_no' && $tableName == 'dtb_shipping') {
