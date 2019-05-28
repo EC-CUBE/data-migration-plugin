@@ -1156,7 +1156,9 @@ class ConfigController extends AbstractController
                 $data['tax_rate'] = 0;
                 $data['quantity'] = 1;
                 $data['id'] = $i;
-                $data['shipping_id'] = $this->shipping_id[$order_id][0];
+                if (isset($this->shipping_id[$order_id][0])) {
+                    $data['shipping_id'] = $this->shipping_id[$order_id][0];
+                }
                 $data['order_id'] = $order_id;
                 $data['tax_type_id'] = 1;
                 $data['rounding_type_id'] = 1;
