@@ -1008,7 +1008,7 @@ class ConfigController extends AbstractController
                         $value[$column] = isset($data['rank']) ? $data['rank'] : 0;
                     } elseif ($column == 'create_date' || $column == 'update_date') {
                         $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : date('Y-m-d H:i:s');
-                    } elseif ($column == 'payment_date' || $column == 'order_date') {
+                    } elseif ($column == 'payment_date') {
                         $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : null;
                     } elseif ($column == 'creator_id') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
@@ -1036,6 +1036,7 @@ class ConfigController extends AbstractController
                             $this->delivery_id[$data['id']] = $data['deliv_id'];
                         }
                         $value['order_no'] = $data['id'];
+                        $value['order_date'] = $data['create_date'];
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
                         if ($data['deliv_fee'] > 0) {
