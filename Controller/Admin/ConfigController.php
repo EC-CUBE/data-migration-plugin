@@ -1035,6 +1035,7 @@ class ConfigController extends AbstractController
                         if (isset($data['deliv_id'])) {
                             $this->delivery_id[$data['id']] = $data['deliv_id'];
                         }
+                        $value['order_no'] = $data['id'];
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
                         if ($data['deliv_fee'] > 0) {
