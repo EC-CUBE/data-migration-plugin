@@ -4,6 +4,7 @@ namespace Plugin\DataMigration4\Controller\Admin;
 
 use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
+use Eccube\Util\StringUtil;
 use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
 use Plugin\DataMigration4\Util\BulkInsertQuery;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -180,7 +181,9 @@ class ConfigController extends AbstractController
 
                 // 物理削除になったので
                 if (isset($data['del_flg']) && $data['del_flg'] == 1) {
-                    continue;
+                    if (!$tableName == 'dtb_customer') {
+                        continue;
+                    }
                 }
 
                 // Schemaにあわせた配列を作成する
@@ -210,7 +213,14 @@ class ConfigController extends AbstractController
                         $value[$column] = $data['work'];
                     } elseif ($column == 'authority_id') {
                         $value[$column] = $data['authority'];
-                    } elseif ($column == 'email' || $column == 'password' || $column == 'name01' || $column == 'name02') {
+                    } elseif ($column == 'email') {
+                        // 退会時はランダムな値に更新
+                        if ($data['del_flg'] == 1) {
+                            $value[$column] = StringUtil::random(60).'@dummy.dummy';
+                        } else {
+                            $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
+                        }
+                    } elseif ($column == 'password' || $column == 'name01' || $column == 'name02') {
                         $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
                     } elseif ($column == 'sort_no') {
                         $value[$column] = $data['rank'];
