@@ -1058,6 +1058,10 @@ class ConfigController extends AbstractController
                         if ($data['discount'] > 0) {
                             $this->order_item[$data['id']]['discount'] = $data['discount'];
                         }
+
+                        // shippingに紐付けるデータを保持
+                        $this->shipping_order[$data['id']] = $data;
+
                         break;
 
                     case 'dtb_shipping':
@@ -1066,6 +1070,13 @@ class ConfigController extends AbstractController
 
                         $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
                         $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
+
+                        // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
+                        if (!empty($data['shipping_commit_date'])) {
+                            $value['shipping_date'] = $data['shipping_commit_date'];
+                        } elseif (!empty($this->shipping_order[$data['order_id']]['commit_date'])) {
+                            $value['shipping_date'] = $this->shipping_order[$data['order_id']]['commit_date'];
+                        }
 
                         break;
 
