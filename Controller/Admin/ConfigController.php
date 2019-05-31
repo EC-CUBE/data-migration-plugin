@@ -181,7 +181,7 @@ class ConfigController extends AbstractController
 
                 // 物理削除になったので
                 if (isset($data['del_flg']) && $data['del_flg'] == 1) {
-                    if (!$tableName == 'dtb_customer') {
+                    if ($tableName != 'dtb_customer') {
                         continue;
                     }
                 }
