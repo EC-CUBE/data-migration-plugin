@@ -886,6 +886,7 @@ class ConfigController extends AbstractController
                 $this->setIdSeq($em, 'dtb_delivery_fee');
                 $this->setIdSeq($em, 'dtb_delivery_time');
                 $this->setIdSeq($em, 'dtb_tax_rule');
+                $this->setIdSeq($em, 'dtb_mail_history');
             }
 
             $em->commit();
