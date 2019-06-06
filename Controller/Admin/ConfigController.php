@@ -66,14 +66,13 @@ class ConfigController extends AbstractController
                 $csvDir = $tmpDir.'/'.$fileNames[0];
                 $this->cutOff24($csvDir, 'bkup_data.csv');
 
-                // create dtb_shipping
-                $this->fix24Shipping($em, $csvDir);
-
                 // 2.4.4系の場合の処理
                 if (file_exists($csvDir.'dtb_products_class.csv')) {
                     // 2.11の場合は通さない
                     if (!file_exists($csvDir.'dtb_class_combination.csv')) {
                         $this->flag_244 = true;
+                        // create dtb_shipping
+                        $this->fix24Shipping($em, $csvDir);
                         $this->fix24ProductsClass($em, $csvDir);
                     }
                 }
@@ -783,6 +782,8 @@ class ConfigController extends AbstractController
                         case 'dtb_class_combination':
                         case 'dtb_order':
                         case 'dtb_order_detail':
+                        case 'dtb_shipping':
+                        case 'dtb_shipment_item':
                         case 'dtb_mail_history':
                             $tableName = $row[0];
                             $allow_zero = false;
