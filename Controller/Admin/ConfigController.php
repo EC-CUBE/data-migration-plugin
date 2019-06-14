@@ -1011,7 +1011,8 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'rule_max') { // 2.13
                         $value[$column] = !empty($data['upper_rule']) ? $data['upper_rule'] : null;
                     } elseif ($column == 'rule_min') { // 2.13
-                        $value[$column] = !empty($data['rule_max']) ? $data['rule_max'] : null;
+                        $value[$column] = !empty($data['rule_max']) ? $data['rule_max'] :
+                            (!empty($data['rule']) ? $data['rule'] : null ) ;
 
                     // --> dtb_order_item
                     } elseif ($column == 'class_category_name1') {
