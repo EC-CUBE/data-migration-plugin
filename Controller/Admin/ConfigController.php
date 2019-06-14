@@ -881,6 +881,7 @@ class ConfigController extends AbstractController
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
             } else {
                 $this->setIdSeq($em, 'dtb_order');
+                $this->setIdSeq($em, 'dtb_order_item');
                 $this->setIdSeq($em, 'dtb_shipping');
                 $this->setIdSeq($em, 'dtb_payment');
                 $this->setIdSeq($em, 'dtb_delivery');
