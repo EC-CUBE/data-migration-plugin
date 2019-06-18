@@ -5,6 +5,7 @@ namespace Plugin\DataMigration4\Controller\Admin;
 use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
+use Eccube\Doctrine\DBAL\Types\UTCDateTimeTzType;
 use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
 use Plugin\DataMigration4\Util\BulkInsertQuery;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -86,6 +87,9 @@ class ConfigController extends AbstractController
                 $this->fix24baseinfo($em, $csvDir);
             }
 
+            //
+            $this->em = $em;
+
             $this->saveCustomer($em, $csvDir);
             $this->saveProduct($em, $csvDir);
             $this->saveOrder($em, $csvDir);
@@ -125,7 +129,7 @@ class ConfigController extends AbstractController
             $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
 
             $this->saveToC($em, $csvDir, 'mtb_authority', null, true);
-            $this->saveToC($em, $csvDir, 'dtb_member', null, true);
+            //$this->saveToC($em, $csvDir, 'dtb_member', null, true);
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
@@ -224,9 +228,9 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'sort_no') {
                         $value[$column] = $data['rank'];
                     } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : date('Y-m-d H:i:s');
+                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
                     } elseif ($column == 'login_date' || $column == 'first_buy_date') {
-                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : null;
+                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
                     } elseif ($column == 'secret_key') { // 実験
                         $value[$column] = mt_rand();
                     } elseif ($column == 'point') {
@@ -426,9 +430,9 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'class_name_id') {
                         $value[$column] = isset($data['class_id']) ? $data['class_id'] : null;
                     } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : date('Y-m-d H:i:s');
+                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
                     } elseif ($column == 'login_date' || $column == 'first_buy_date') {
-                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : null;
+                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
                     } elseif ($column == 'creator_id') {
                         $value[$column] = null; // 固定
                     } elseif ($column == 'stock_unlimited') {
@@ -564,9 +568,9 @@ class ConfigController extends AbstractController
                 }
                 $value['del_flg'] = $data['del_flg'];
                 $value['order_id'] = $data['order_id'];
-                $value['create_date'] = $data['create_date'];
-                $value['update_date'] = $data['update_date'];
-                $value['shipping_commit_date'] = $data['commit_date'];
+                $value['create_date'] = self::convertTz($data['create_date']);
+                $value['update_date'] = self::convertTz($data['update_date']);
+                $value['shipping_commit_date'] = self::convertTz($data['commit_date']);
 
                 $add_value[$i] = $value;
                 $i++;
@@ -990,7 +994,7 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_date') {
                         $value[$column] = empty($data['date']) ? null : $data['date'];
                     } elseif ($column == 'shipping_date') {
-                        $value[$column] = empty($data['commit_date']) ? null : $data['commit_date'];
+                        $value[$column] = empty($data['commit_date']) ? null : self::convertTz($data['commit_date']);
                     } elseif ($column == 'visible' /*&& $tableName == 'dtb_payment'*/) {
                         $value[$column] = 0;
 
@@ -1026,9 +1030,9 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'sort_no') {
                         $value[$column] = isset($data['rank']) ? $data['rank'] : 0;
                     } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : date('Y-m-d H:i:s');
+                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
                     } elseif ($column == 'payment_date') {
-                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? $data[$column] : null;
+                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
                     } elseif ($column == 'creator_id') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
                     } elseif ($column == 'charge' || $column == 'use_point' || $column == 'add_point' || $column == 'discount' || $column == 'total' || $column == 'subtotal' || $column == 'tax' || $column == 'payment_total') {
@@ -1055,7 +1059,7 @@ class ConfigController extends AbstractController
                             $this->delivery_id[$data['id']] = $data['deliv_id'];
                         }
                         $value['order_no'] = $data['id'];
-                        $value['order_date'] = $data['create_date'];
+                        $value['order_date'] = self::convertTz($data['create_date']);
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
                         if ($data['deliv_fee'] > 0) {
@@ -1136,7 +1140,7 @@ class ConfigController extends AbstractController
                     case 'dtb_mail_history':
                         $value['id'] = $data['send_id'];
                         $value['order_id'] = $data['order_id'];
-                        $value['send_date'] = $data['send_date'];
+                        $value['send_date'] = self::convertTz($data['send_date']);
                         $value['mail_subject'] = $data['subject'];
                         $value['mail_body'] = $data['mail_body'];
 
@@ -1242,5 +1246,16 @@ class ConfigController extends AbstractController
         } else {
             $em->exec('DELETE FROM '.$tableName);
         }
+    }
+
+
+    // タイムゾーンの変換
+    // ECCUBE_TIMEZONE= への対応
+    private function convertTz($datetime)
+    {
+        $date = new \DateTime($datetime, new \DateTimeZone(ini_get('date.timezone')));
+        $date->setTimezone(new \DateTimeZone('UTC'));
+
+        return $date->format($this->em->getDatabasePlatform()->getDateTimeTzFormatString());
     }
 }
