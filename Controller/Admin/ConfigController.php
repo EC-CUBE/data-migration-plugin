@@ -1096,6 +1096,7 @@ class ConfigController extends AbstractController
                     case 'dtb_tax_rule':
                         $value['id'] = $data['tax_rule_id'];
                         $value['tax_adjust'] = 0;
+                        $value['apply_date'] = self::convertTz($data['apply_date']);
                         $value['rounding_type_id'] = $data['calc_rule'];
                         break;
 
