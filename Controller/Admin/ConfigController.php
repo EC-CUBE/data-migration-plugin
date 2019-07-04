@@ -308,6 +308,7 @@ class ConfigController extends AbstractController
             $em->exec('DELETE FROM dtb_cart_item');
 
             // 外部キー制約エラーになるデータを消す
+            $em->exec('DELETE FROM dtb_class_category WHERE id = 0');
             $em->exec('UPDATE dtb_product_class SET class_category_id1 = NULL WHERE class_category_id1 not in (select id from dtb_class_category)');
             $em->exec('UPDATE dtb_product_class SET class_category_id2 = NULL WHERE class_category_id2 not in (select id from dtb_class_category)');
 
