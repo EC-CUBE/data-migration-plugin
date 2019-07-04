@@ -182,13 +182,6 @@ class ConfigController extends AbstractController
                 // 1行目をkeyとした配列を作る
                 $data = array_combine($key, $row);
 
-                // 物理削除になったので
-                if (isset($data['del_flg']) && $data['del_flg'] == 1) {
-                    if ($tableName != 'dtb_customer') {
-                        continue;
-                    }
-                }
-
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
                     if ($column == 'id' && $tableName == 'dtb_customer') { // fixme
