@@ -381,11 +381,17 @@ class ConfigController extends AbstractController
 
                     // カラム名が違うので
                     } elseif ($column == 'description_list') {
-                        $value[$column] = isset($data['main_list_comment']) ? $data['main_list_comment'] : null;
+                        $value[$column] = isset($data['main_list_comment'])
+                            ? mb_substr($data['main_list_comment'], 0, 3999)
+                            : null;
                     } elseif ($column == 'description_detail') {
-                        $value[$column] = isset($data['main_comment']) ? $data['main_comment'] : null;
+                        $value[$column] = isset($data['main_comment'])
+                            ? mb_substr($data['main_comment'], 0, 3999)
+                            : null;
                     } elseif ($column == 'search_word') {
-                        $value[$column] = isset($data['comment3']) ? $data['comment3'] : null;
+                        $value[$column] = isset($data['comment3'])
+                            ? mb_substr($data['comment3'], 0, 3999)
+                            : null;
                     } elseif ($column == 'free_area') {
                         $value[$column] = $data['sub_title1']."\n".$data['sub_comment1']."\n"
                             .$data['sub_title2']."\n".$data['sub_comment2']."\n"
