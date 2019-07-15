@@ -206,7 +206,8 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'pref_id') {
                         $value[$column] = empty($data['pref']) ? null : $data['pref'];
                     } elseif ($column == 'work_id') {
-                        $value[$column] = $data['work'];
+                        // 削除されているメンバーは非稼働で登録
+                        $value[$column] = ($data['del_flg'] == 1) ? 0 : $data['work'];
                     } elseif ($column == 'authority_id') {
                         $value[$column] = $data['authority'];
                     } elseif ($column == 'email') {
