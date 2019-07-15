@@ -868,7 +868,7 @@ class ConfigController extends AbstractController
             $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
 
             // todo ダウンロード販売の処理
-            $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item');
+            $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
 
             // todo 商品別税率設定
