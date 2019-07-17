@@ -206,7 +206,8 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'pref_id') {
                         $value[$column] = empty($data['pref']) ? null : $data['pref'];
                     } elseif ($column == 'work_id') {
-                        $value[$column] = $data['work'];
+                        // 削除されているメンバーは非稼働で登録
+                        $value[$column] = ($data['del_flg'] == 1) ? 0 : $data['work'];
                     } elseif ($column == 'authority_id') {
                         $value[$column] = $data['authority'];
                     } elseif ($column == 'email') {
@@ -381,11 +382,17 @@ class ConfigController extends AbstractController
 
                     // カラム名が違うので
                     } elseif ($column == 'description_list') {
-                        $value[$column] = isset($data['main_list_comment']) ? $data['main_list_comment'] : null;
+                        $value[$column] = isset($data['main_list_comment'])
+                            ? mb_substr($data['main_list_comment'], 0, 3999)
+                            : null;
                     } elseif ($column == 'description_detail') {
-                        $value[$column] = isset($data['main_comment']) ? $data['main_comment'] : null;
+                        $value[$column] = isset($data['main_comment'])
+                            ? mb_substr($data['main_comment'], 0, 3999)
+                            : null;
                     } elseif ($column == 'search_word') {
-                        $value[$column] = isset($data['comment3']) ? $data['comment3'] : null;
+                        $value[$column] = isset($data['comment3'])
+                            ? mb_substr($data['comment3'], 0, 3999)
+                            : null;
                     } elseif ($column == 'free_area') {
                         $value[$column] = $data['sub_title1']."\n".$data['sub_comment1']."\n"
                             .$data['sub_title2']."\n".$data['sub_comment2']."\n"
@@ -862,7 +869,7 @@ class ConfigController extends AbstractController
             $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
 
             // todo ダウンロード販売の処理
-            $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item');
+            $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
 
             // todo 商品別税率設定
