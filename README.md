@@ -49,6 +49,8 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
 ## :exclamation: 注意点
 - アップロードファイルの最大容量はPHPの設定に依存します。(memory_limit, post_max_size, upload_max_filesize)
 - PostgreSQLの場合は、super user権限が必要になります
+- 古いEC-CUBEからの移行の場合、```eccube_password_hash_algos: SHA256```を変更する必要があります
+- PostgreSQLの場合は、super user権限が必要になります
 - プラグイン内でcomposerを使用しているため、オーナーズストア経由のインストールが必要になります
 - 新規に使う支払い方法と配送方法を設定する必要があります
 - 複数配送は移行できません
