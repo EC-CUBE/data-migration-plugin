@@ -974,6 +974,9 @@ class ConfigController extends AbstractController
                         if ($data['status'] == 2) {
                             $value[$column] = 4;
                         }
+                        if ($data['status'] == '') {
+                            $value[$column] = 3;
+                        }
                     } elseif ($column == 'postal_code') {
                         $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
                         if (empty($value[$column])) {
