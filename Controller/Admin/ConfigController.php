@@ -419,7 +419,9 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_fee') {
                         $value[$column] = isset($data['delivery_fee']) ? $data['delivery_fee'] : null;
                     } elseif ($column == 'stock') {
-                        $value[$column] = !empty($data['stock']) ? $data['stock'] : null;
+                        $value[$column] = isset($data['stock']) && $data['stock'] !== ''
+                            ? $data['stock']
+                            : null;
 
                         // dtb_product_stock
                         // todo 2.4系の場合、データが足りない
