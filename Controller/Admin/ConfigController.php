@@ -419,7 +419,9 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_fee') {
                         $value[$column] = isset($data['delivery_fee']) ? $data['delivery_fee'] : null;
                     } elseif ($column == 'stock') {
-                        $value[$column] = !empty($data['stock']) ? $data['stock'] : null;
+                        $value[$column] = isset($data['stock']) && $data['stock'] !== ''
+                            ? $data['stock']
+                            : null;
 
                         // dtb_product_stock
                         // todo 2.4系の場合、データが足りない
@@ -971,6 +973,9 @@ class ConfigController extends AbstractController
                         // 4系に存在しないstatusなので
                         if ($data['status'] == 2) {
                             $value[$column] = 4;
+                        }
+                        if ($data['status'] == '') {
+                            $value[$column] = 3;
                         }
                     } elseif ($column == 'postal_code') {
                         $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
