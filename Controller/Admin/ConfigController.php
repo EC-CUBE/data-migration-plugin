@@ -62,6 +62,9 @@ class ConfigController extends AbstractController
             $fileNames = $archive->getFileNames();
 
             $this->flag_244 = false;
+            //
+            $this->em = $em;
+
             // 2.4.4系の場合の処理
             if ($archive->getFileData($fileNames[0].'bkup_data.csv')) {
                 $csvDir = $tmpDir.'/'.$fileNames[0];
@@ -86,9 +89,6 @@ class ConfigController extends AbstractController
                 // 税率など
                 $this->fix24baseinfo($em, $csvDir);
             }
-
-            //
-            $this->em = $em;
 
             $this->saveCustomer($em, $csvDir);
             $this->saveProduct($em, $csvDir);
@@ -618,11 +618,13 @@ class ConfigController extends AbstractController
 
             fclose($handle);
 
-            $fpcsv = fopen($tmpDir.'dtb_products_class.csv', 'a');
-            foreach ($add_value as $row) {
-                fputcsv($fpcsv, array_values($row));
+            if (!empty($add_value)) {
+                $fpcsv = fopen($tmpDir.'dtb_products_class.csv', 'a');
+                foreach ($add_value as $row) {
+                    fputcsv($fpcsv, array_values($row));
+                }
+                fclose($fpcsv);
             }
-            fclose($fpcsv);
         }
     }
 
@@ -870,12 +872,15 @@ class ConfigController extends AbstractController
 
             $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
 
+            if (!isset($this->product_class_id)) {
+                sleep(5);
+            }
             // todo ダウンロード販売の処理
             $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
 
             // todo 商品別税率設定
-            $this->saveToO($em, $csvDir, 'dtb_tax_rule');
+            $this->saveToO($em, $csvDir, 'dtb_tax_rule', null, true); // 税率0にしている場合がある
 
             if (!empty($this->order_item)) {
                 $this->saveOrderItem($em);
@@ -1119,7 +1124,7 @@ class ConfigController extends AbstractController
                         $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : NULL;
 
                         // 2.4.4, 2.11, 2.12
-                        if (isset($this->baseinfo['tax'])) {
+                        if (isset($this->baseinfo)) {
                             $value['tax_rate'] = $data['tax_rate'] = $this->baseinfo['tax'];
                             $data['point_rate'] = $this->baseinfo['point_rate'];
                         }
