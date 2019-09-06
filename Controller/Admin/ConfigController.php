@@ -1120,6 +1120,7 @@ class ConfigController extends AbstractController
                         $value['rounding_type_id'] = 1;
                         $value['tax_type_id'] = 1;
                         $value['tax_display_type_id'] = 1;
+                        $value['tax_adjust'] = 0;
 
                         $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : NULL;
 
@@ -1211,6 +1212,7 @@ class ConfigController extends AbstractController
                 $data['price'] = $value;
                 $data['tax'] = 0;
                 $data['tax_rate'] = 0;
+                $data['tax_adjust'] = 0;
                 $data['quantity'] = 1;
                 $data['id'] = $i;
                 if (isset($this->shipping_id[$order_id][0])) {
