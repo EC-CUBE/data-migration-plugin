@@ -1052,9 +1052,9 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'charge' || $column == 'use_point' || $column == 'add_point' || $column == 'discount' || $column == 'total' || $column == 'subtotal' || $column == 'tax' || $column == 'payment_total') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
 
-                    //} elseif ($column == 'id' && $tableName == 'dtb_customer_address') {
-                    //        // カラム名が違うので
-                    //    $value[$column] = $i;
+                    } elseif ($column == 'tax_adjust') {
+                        $value['tax_adjust'] = 0; // 0固定
+
                     } elseif ($column == 'discriminator_type') {
                         $search = ['dtb_', 'mtb_', '_'];
                         $value[$column] = str_replace($search, '', $tableName);
@@ -1164,7 +1164,6 @@ class ConfigController extends AbstractController
 
                         $value['tax_type_id'] = 1;
                         $value['tax_display_type_id'] = 1;
-                        $value['tax_adjust'] = 0;
 
                         // 4.0.3でtax_rule_idはdeprecated.
                         $value['tax_rule_id'] = null;
@@ -1230,7 +1229,13 @@ class ConfigController extends AbstractController
         $columns = $em->getSchemaManager()->listTableColumns($tableName);
         foreach ($columns as $column) {
             $listTableColumns[] = $column->getName();
-            $data[$column->getName()] = null;
+
+            if ($column->getName() == 'tax_adjust') {
+                $data[$column->getName()] = 0; // 4.0.3 以降に対する対応
+            } else {
+                $data[$column->getName()] = null;
+            }
+
         }
 
         $builder = new BulkInsertQuery($em, $tableName, 20);
@@ -1288,7 +1293,7 @@ class ConfigController extends AbstractController
                     $round = 'round';
                 }
                 $data['tax'] = $round($data['price'] * $data['tax_rate'] / 100) * 1;
-                $data['tax_adjust'] = 0;
+                //$data['tax_adjust'] = 0; // 4.0.2でエラーになる
                 $data['quantity'] = 1;
                 $data['id'] = $i;
                 $data['order_id'] = $order_id;
