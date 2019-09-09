@@ -20,6 +20,9 @@ class ConfigController extends AbstractController
     /** @var pluginService */
     protected $pluginService;
 
+    /** @var array */
+    protected $tax_rule = [];
+
     /**
      * constructor.
      *
@@ -1137,15 +1140,12 @@ class ConfigController extends AbstractController
                             $value['product_class_id'] = null;
                         }
 
-                        $this->tax_rule = [];
                         // 基本税率を保持しておく(送料等の明細を作成するタイミングで利用する)
                         if ($value['product_id'] === null && $value['product_class_id'] === null) {
-                            $this->tax_rule = [
-                                $value['apply_date'] => [
-                                    'rounding_type_id' => $value['rounding_type_id'],
-                                    'tax_rate' => $data['tax_rate'],
-                                    'apply_date' => $value['apply_date'],
-                                ]
+                            $this->tax_rule[$value['apply_date']] = [
+                                'rounding_type_id' => $value['rounding_type_id'],
+                                'tax_rate' => $data['tax_rate'],
+                                'apply_date' => $value['apply_date'],
                             ];
                         }
                         krsort($this->tax_rule);
@@ -1352,6 +1352,6 @@ class ConfigController extends AbstractController
             }
         }
 
-        return $this->tax_rule[0];
+        return array_values($this->tax_rule)[0];
     }
 }
