@@ -1109,6 +1109,17 @@ class ConfigController extends AbstractController
                         $value['tax_adjust'] = 0;
                         $value['apply_date'] = self::convertTz($data['apply_date']);
                         $value['rounding_type_id'] = $data['calc_rule'];
+
+                        if ($data['pref_id'] === '0') {
+                            $value['pref_id'] = null;
+                        }
+                        if ($data['country_id'] === '0') {
+                            $value['country_id'] = null;
+                        }
+                        if ($data['product_id'] === '0' && $data['product_class_id'] === '0') {
+                            $value['product_id'] = null;
+                            $value['product_class_id'] = null;
+                        }
                         break;
 
                     case 'dtb_order_item':
