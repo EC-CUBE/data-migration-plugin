@@ -1117,12 +1117,15 @@ class ConfigController extends AbstractController
                         } else {
                             $value['id'] = $i; // 2.4.4
                         }
-                        $value['rounding_type_id'] = 1;
+                        // dtb_order_detail.tax_ruleははdtb_tax_rule.calc_ruleの値
+                        $value['rounding_type_id'] = $data['tax_rule'];
+
                         $value['tax_type_id'] = 1;
                         $value['tax_display_type_id'] = 1;
                         $value['tax_adjust'] = 0;
 
-                        $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : NULL;
+                        // 4.0.3でtax_rule_idはdeprecated.
+                        $value['tax_rule_id'] = null;
 
                         // 2.4.4, 2.11, 2.12
                         if (isset($this->baseinfo)) {
