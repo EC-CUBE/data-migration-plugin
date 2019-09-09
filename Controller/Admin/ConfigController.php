@@ -1125,13 +1125,14 @@ class ConfigController extends AbstractController
                         $value['apply_date'] = self::convertTz($data['apply_date']);
                         $value['rounding_type_id'] = $data['calc_rule'];
 
-                        if ($data['pref_id'] === '0') {
+                        if (isset($data['pref_id']) && $data['pref_id'] === '0') {
                             $value['pref_id'] = null;
                         }
-                        if ($data['country_id'] === '0') {
+                        if (isset($data['country_id']) && $data['country_id'] === '0') {
                             $value['country_id'] = null;
                         }
-                        if ($data['product_id'] === '0' && $data['product_class_id'] === '0') {
+                        if (isset($data['product_id']) && $data['product_id'] === '0'
+                            && isset($data['product_class_id']) && $data['product_class_id'] === '0') {
                             $value['product_id'] = null;
                             $value['product_class_id'] = null;
                         }
@@ -1157,7 +1158,9 @@ class ConfigController extends AbstractController
                             $value['id'] = $i; // 2.4.4
                         }
                         // dtb_order_detail.tax_ruleははdtb_tax_rule.calc_ruleの値
-                        $value['rounding_type_id'] = $data['tax_rule'];
+                        $value['rounding_type_id'] = isset($data['tax_rule'])
+                            ? $data['tax_rule']
+                            : $this->baseinfo['tax_rule'];
 
                         $value['tax_type_id'] = 1;
                         $value['tax_display_type_id'] = 1;
