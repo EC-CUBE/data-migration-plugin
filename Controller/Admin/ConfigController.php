@@ -20,6 +20,9 @@ class ConfigController extends AbstractController
     /** @var pluginService */
     protected $pluginService;
 
+    /** @var array */
+    protected $tax_rule = [];
+
     /**
      * constructor.
      *
@@ -1074,13 +1077,28 @@ class ConfigController extends AbstractController
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
                         if ($data['deliv_fee'] > 0) {
-                            $this->order_item[$data['id']]['deliv_fee'] = $data['deliv_fee'];
+                            $this->order_item[$data['id']]['deliv_fee'] = [
+                                'price' => $data['deliv_fee'],
+                                'order_date' => $value['order_date'],
+                            ];
                         }
                         if ($data['charge'] > 0) {
-                            $this->order_item[$data['id']]['charge'] = $data['charge'];
+                            $this->order_item[$data['id']]['charge'] = [
+                                'price' => $data['charge'],
+                                'order_date' => $value['order_date'],
+                            ];
                         }
                         if ($data['discount'] > 0) {
-                            $this->order_item[$data['id']]['discount'] = $data['discount'];
+                            $this->order_item[$data['id']]['discount'] = [
+                                'price' => $data['discount'],
+                                'order_date' => $value['order_date'],
+                            ];
+                        }
+                        if ($data['use_point'] > 0) {
+                            $this->order_item[$data['id']]['use_point'] = [
+                                'price' => $data['use_point'],
+                                'order_date' => $value['order_date'],
+                            ];
                         }
 
                         // shippingに紐付けるデータを保持
@@ -1109,6 +1127,28 @@ class ConfigController extends AbstractController
                         $value['tax_adjust'] = 0;
                         $value['apply_date'] = self::convertTz($data['apply_date']);
                         $value['rounding_type_id'] = $data['calc_rule'];
+
+                        if (isset($data['pref_id']) && $data['pref_id'] === '0') {
+                            $value['pref_id'] = null;
+                        }
+                        if (isset($data['country_id']) && $data['country_id'] === '0') {
+                            $value['country_id'] = null;
+                        }
+                        if (isset($data['product_id']) && $data['product_id'] === '0'
+                            && isset($data['product_class_id']) && $data['product_class_id'] === '0') {
+                            $value['product_id'] = null;
+                            $value['product_class_id'] = null;
+                        }
+
+                        // 基本税率を保持しておく(送料等の明細を作成するタイミングで利用する)
+                        if ($value['product_id'] === null && $value['product_class_id'] === null) {
+                            $this->tax_rule[$value['apply_date']] = [
+                                'rounding_type_id' => $value['rounding_type_id'],
+                                'tax_rate' => $data['tax_rate'],
+                                'apply_date' => $value['apply_date'],
+                            ];
+                        }
+                        krsort($this->tax_rule);
                         break;
 
                     case 'dtb_order_item':
@@ -1117,11 +1157,16 @@ class ConfigController extends AbstractController
                         } else {
                             $value['id'] = $i; // 2.4.4
                         }
-                        $value['rounding_type_id'] = 1;
+                        // dtb_order_detail.tax_ruleははdtb_tax_rule.calc_ruleの値
+                        $value['rounding_type_id'] = isset($data['tax_rule'])
+                            ? $data['tax_rule']
+                            : $this->baseinfo['tax_rule'];
+
                         $value['tax_type_id'] = 1;
                         $value['tax_display_type_id'] = 1;
 
-                        $value['tax_rule_id'] = isset($data['tax_rule']) ? $data['tax_rule'] : NULL;
+                        // 4.0.3でtax_rule_idはdeprecated.
+                        $value['tax_rule_id'] = null;
 
                         // 2.4.4, 2.11, 2.12
                         if (isset($this->baseinfo)) {
@@ -1200,33 +1245,59 @@ class ConfigController extends AbstractController
         $batchSize = 20;
         foreach ($this->order_item as $order_id => $type) {
             foreach ($type as $key => $value) {
+                $tax_rule = $this->getTaxRule($value['order_date']);
+                $data['tax_rate'] = $tax_rule['tax_rate'];
+                $data['rounding_type_id'] = $tax_rule['rounding_type_id'];
+                $data['shipping_id'] = null;
+
                 switch ($key) {
                 case 'deliv_fee':
                     $data['order_item_type_id'] = 2;
                     $data['product_name'] = '送料';
+                    $data['price'] = $value['price'];
+                    $data['tax_type_id'] = 1; // 課税
+                    $data['tax_display_type_id'] = 2; // 税込表示
+                    if (isset($this->shipping_id[$order_id][0])) {
+                        $data['shipping_id'] = $this->shipping_id[$order_id][0];
+                    }
                     break;
                 case 'charge':
                     $data['order_item_type_id'] = 3;
                     $data['product_name'] = '手数料';
+                    $data['price'] = $value['price'];
+                    $data['tax_type_id'] = 1; // 課税
+                    $data['tax_display_type_id'] = 2; // 税込表示
                     break;
                 case 'discount':
                     $data['order_item_type_id'] = 4;
                     $data['product_name'] = '割引';
+                    $data['price'] = $value['price'] * -1;
+                    $data['tax_type_id'] = 1; // 課税
+                    $data['tax_display_type_id'] = 2; // 税込表示
+                    break;
+                case 'use_point':
+                    $data['order_item_type_id'] = 6;
+                    $data['product_name'] = 'ポイント';
+                    $data['price'] = $value['price'] * -1; // use_pointはポイント数のため、正確な値はだせない.ここでは1pt1円として登録する.
+                    $data['tax_type_id'] = 2;   // 不課税
+                    $data['tax_display_type_id'] = 2; // 税込表示
+                    $data['tax_rate'] = 0;
                     break;
                 }
-                $data['price'] = $value;
-                $data['tax'] = 0;
-                $data['tax_rate'] = 0;
+
+                if ($data['rounding_type_id'] == 2) {
+                    $round = 'floor';
+                } elseif ($data['rounding_type_id'] == 3) {
+                    $round = 'ceil';
+                } else {
+                    $round = 'round';
+                }
+                $data['tax'] = $round($data['price'] * $data['tax_rate'] / 100) * 1;
                 //$data['tax_adjust'] = 0; // 4.0.2でエラーになる
                 $data['quantity'] = 1;
                 $data['id'] = $i;
-                if (isset($this->shipping_id[$order_id][0])) {
-                    $data['shipping_id'] = $this->shipping_id[$order_id][0];
-                }
                 $data['order_id'] = $order_id;
-                $data['tax_type_id'] = 1;
-                $data['rounding_type_id'] = 1;
-                $data['tax_display_type_id'] = 2;
+                $data['currency_code'] = 'JPY';
                 $data['discriminator_type'] = 'orderitem';
 
                 $builder->setValues($data);
@@ -1276,5 +1347,16 @@ class ConfigController extends AbstractController
         $date->setTimezone(new \DateTimeZone('UTC'));
 
         return $date->format($this->em->getDatabasePlatform()->getDateTimeTzFormatString());
+    }
+
+    private function getTaxRule($order_date)
+    {
+        foreach ($this->tax_rule as $apply_date => $value) {
+            if ($apply_date < $order_date) {
+                return $value;
+            }
+        }
+
+        return array_values($this->tax_rule)[0];
     }
 }
