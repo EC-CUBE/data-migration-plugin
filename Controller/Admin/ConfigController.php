@@ -878,12 +878,12 @@ class ConfigController extends AbstractController
             if (!isset($this->product_class_id)) {
                 sleep(5);
             }
+            // todo 商品別税率設定
+            $this->saveToO($em, $csvDir, 'dtb_tax_rule', null, true); // 税率0にしている場合がある
+
             // todo ダウンロード販売の処理
             $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
             //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
-
-            // todo 商品別税率設定
-            $this->saveToO($em, $csvDir, 'dtb_tax_rule', null, true); // 税率0にしている場合がある
 
             if (!empty($this->order_item)) {
                 $this->saveOrderItem($em);
@@ -1179,8 +1179,17 @@ class ConfigController extends AbstractController
                             $value['product_class_id'] = $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']];
                         }
 
-                        if (!empty($data['price']) && !empty($data['tax_rate']) && !empty($data['quantity'])) {
-                            $value['tax'] = round($data['price'] * $data['tax_rate'] / 100) * $data['quantity'];
+                        if (isset($data['price']) && isset($data['tax_rate'])) {
+                            if ($value['rounding_type_id'] == 2) {
+                                $round = 'floor';
+                            } elseif ($data['rounding_type_id'] == 3) {
+                                $round = 'ceil';
+                            } else {
+                                $round = 'round';
+                            }
+                            $value['tax'] = $round($data['price'] * $data['tax_rate'] / 100);
+                        } else {
+                            $value['tax'] = 0;
                         }
 
                         $value['order_item_type_id'] = 1; // 商品で固定する
