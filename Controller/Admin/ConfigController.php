@@ -307,6 +307,9 @@ class ConfigController extends AbstractController
             // 画像の移行はしない
             $em->exec('DELETE FROM dtb_product_image');
 
+            // 削除済み商品を4系のデータ構造に合わせる
+            $this->fixDeletedProduct($em);
+
             // リレーションエラーになるので
             $em->exec('DELETE FROM dtb_cart');
             $em->exec('DELETE FROM dtb_cart_item');
@@ -1182,7 +1185,7 @@ class ConfigController extends AbstractController
                         if (isset($data['price']) && isset($data['tax_rate'])) {
                             if ($value['rounding_type_id'] == 2) {
                                 $round = 'floor';
-                            } elseif ($data['rounding_type_id'] == 3) {
+                            } elseif ($value['rounding_type_id'] == 3) {
                                 $round = 'ceil';
                             } else {
                                 $round = 'round';
@@ -1367,5 +1370,17 @@ class ConfigController extends AbstractController
         }
 
         return array_values($this->tax_rule)[0];
+    }
+
+    private function fixDeletedProduct($em)
+    {
+        $sql = 'UPDATE dtb_product_class SET visible = true WHERE id IN (
+SELECT 
+t1.id AS product_class_id
+FROM dtb_product_class AS t1
+LEFT JOIN dtb_product AS t2 on t1.product_id = t2.id
+WHERE t2.product_status_id = 3 AND t1.visible = false
+)';
+        $em->exec($sql);
     }
 }
