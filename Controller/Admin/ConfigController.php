@@ -307,6 +307,9 @@ class ConfigController extends AbstractController
             // 画像の移行はしない
             $em->exec('DELETE FROM dtb_product_image');
 
+            // 削除済み商品を4系のデータ構造に合わせる
+            $this->fixDeletedProduct($em);
+
             // リレーションエラーになるので
             $em->exec('DELETE FROM dtb_cart');
             $em->exec('DELETE FROM dtb_cart_item');
@@ -891,9 +894,6 @@ class ConfigController extends AbstractController
 
             // 支払いは基本移行しない
             $em->exec('DELETE FROM dtb_payment_option');
-
-            // 削除済み商品を4系のデータ構造に合わせる
-            $this->fixDeletedProduct($em);
 
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
