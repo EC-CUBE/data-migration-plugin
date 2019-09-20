@@ -45,6 +45,7 @@ class ConfigController extends AbstractController
         $this->shipping_id = [];
         $this->product_class_id = [];
         $this->order_item = [];
+        $this->product_image = [];
 
         $form = $this->createForm(ConfigType::class);
         $form->handleRequest($request);
@@ -317,8 +318,8 @@ class ConfigController extends AbstractController
             // 在庫
             $this->saveStock($em);
 
-            // 画像の移行はしない
-            $em->exec('DELETE FROM dtb_product_image');
+            // 画像
+            $this->saveProductImage($em);
 
             // 削除済み商品を4系のデータ構造に合わせる
             $this->fixDeletedProduct($em);
@@ -342,6 +343,7 @@ class ConfigController extends AbstractController
                 $this->setIdSeq($em, 'dtb_class_name');
                 $this->setIdSeq($em, 'dtb_category');
                 $this->setIdSeq($em, 'dtb_product_stock');
+                $this->setIdSeq($em, 'dtb_product_image');
             }
 
             $em->commit();
@@ -488,6 +490,15 @@ class ConfigController extends AbstractController
                     if (isset($data['deliv_date_id'])) {
                         // delivery_date_id <-- deliv_date_id (dtb_products)
                         $this->delivery_id[$data['product_id']] = $data['deliv_date_id'];
+                    }
+
+                    // product_image
+                    if (!empty($data['main_large_image'])) {
+                        $this->product_image[$data['product_id']] = $data['main_large_image'];
+                    } elseif (!empty($data['main_image'])) {
+                        $this->product_image[$data['product_id']] = $data['main_image'];
+                    } elseif (!empty($data['main_list_image'])) {
+                        $this->product_image[$data['product_id']] = $data['main_list_image'];
                     }
                 }
 
@@ -756,6 +767,45 @@ class ConfigController extends AbstractController
             $data['stock'] = $stock;
             $data['create_date'] = $data['update_date'] = date('Y-m-d H:i:s');
             $data['discriminator_type'] = 'productstock';
+
+            $builder->setValues($data);
+
+            // 20件に1回SQLを発行してメモリを開放する。
+            if (($i % $batchSize) === 0) {
+                $builder->execute();
+            }
+            $i++;
+        }
+        if (count($builder->getValues()) > 0) {
+            $builder->execute();
+            sleep(1);
+        }
+    }
+
+    private function saveProductImage($em)
+    {
+        $tableName = 'dtb_product_image';
+        $columns = $em->getSchemaManager()->listTableColumns($tableName);
+        foreach ($columns as $column) {
+            $listTableColumns[] = $column->getName();
+        }
+
+        $builder = new BulkInsertQuery($em, $tableName, 20);
+        $builder->setColumns($listTableColumns);
+
+        $em->exec('DELETE FROM '.$tableName);
+
+        $i = 1;
+        $batchSize = 20;
+        foreach ($this->product_image as $product_id => $file_name) {
+            $data['id'] = $i;
+            $data['product_id'] = $product_id;
+            $data['creator_id'] = null;
+            $data['file_name'] = $file_name;
+            $data['sort_no'] = 1;   // 1ファイルのみ移行するため、1固定で
+
+            $data['create_date'] = date('Y-m-d H:i:s');
+            $data['discriminator_type'] = 'productimage';
 
             $builder->setValues($data);
 
