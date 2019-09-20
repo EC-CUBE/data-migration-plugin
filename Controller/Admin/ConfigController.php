@@ -84,7 +84,15 @@ class ConfigController extends AbstractController
                     }
                 }
             } else {
-                $csvDir = $tmpDir.'/';
+                // 圧縮方式の間違いに対応する
+                $path = pathinfo($fileNames[0]);
+
+                if ($path != '.') {
+                    $csvDir = $tmpDir.'/'.$path['dirname'].'/';
+                } else {
+                    $csvDir = $tmpDir.'/';
+                }
+
             }
 
             // 2.13以外全部
@@ -308,7 +316,7 @@ class ConfigController extends AbstractController
             $em->exec('DELETE FROM dtb_product_image');
 
             // 削除済み商品を4系のデータ構造に合わせる
-            $this->fixDeletedProduct($em);
+            //$this->fixDeletedProduct($em);
 
             // リレーションエラーになるので
             $em->exec('DELETE FROM dtb_cart');
@@ -1190,7 +1198,8 @@ class ConfigController extends AbstractController
                             } else {
                                 $round = 'round';
                             }
-                            $value['tax'] = $round($data['price'] * $data['tax_rate'] / 100);
+                            // Warning: A non-numeric value encountered
+                            $value['tax'] = $round((int)$data['price'] * (int)$data['tax_rate'] / 100);
                         } else {
                             $value['tax'] = 0;
                         }
@@ -1375,7 +1384,7 @@ class ConfigController extends AbstractController
     private function fixDeletedProduct($em)
     {
         $sql = 'UPDATE dtb_product_class SET visible = true WHERE id IN (
-SELECT 
+SELECT
 t1.id AS product_class_id
 FROM dtb_product_class AS t1
 LEFT JOIN dtb_product AS t2 on t1.product_id = t2.id
