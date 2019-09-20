@@ -80,14 +80,26 @@ file that was distributed with this source code.
                             </dl>
                         </div>
                         <div id="ex-csv_product-upload" class="card-body">
-                            <div class="row">
+                            <div class="row mb-3">
                                 <div class="col-2"><span>バックアップファイル</span></div>
                                 <div class="col">
                                         {{ form_widget(form.import_file, {'attr': {'accept': 'application/zip,application/x-tar,application/x-gzip'}}) }}
                                         {{ form_errors(form.import_file) }}
                                         <br/>
                                         <button class="btn btn-ec-conversion" type="submit" id="upload-button">Upload</button> (最大 {{ max_upload_size }})
-                                    </form>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-2"><span>オプション</span></div>
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input type="checkbox" id="{{ form.customer_order_only.vars.id }}" name="{{ form.customer_order_only.vars.full_name }}" class="form-check-input" value="1" />
+                                        <label class="form-check-label" for="{{ form.customer_order_only.vars.id }}">会員と受注データのみ移行する</label>
+                                        <i data-tooltip="true"
+                                           data-placement="top"
+                                           data-original-title="このオプションを利用するには、一度全データが移行されている必要があります。新サイトの構築期間中に、旧サイトで発生した会員や受注データを取り込みたい場合に使用してください" class="fa fa-question-circle fa-lg ml-1"></i>
+                                    </div>
+                                    {{ form_errors(form.customer_order_only ) }}
                                 </div>
                             </div>
                         </div>
@@ -112,3 +124,5 @@ file that was distributed with this source code.
         </div>
     </form>
 {% endblock %}
+
+
