@@ -316,7 +316,7 @@ class ConfigController extends AbstractController
             $em->exec('DELETE FROM dtb_product_image');
 
             // 削除済み商品を4系のデータ構造に合わせる
-            //$this->fixDeletedProduct($em);
+            $this->fixDeletedProduct($em);
 
             // リレーションエラーになるので
             $em->exec('DELETE FROM dtb_cart');
@@ -1383,13 +1383,29 @@ class ConfigController extends AbstractController
 
     private function fixDeletedProduct($em)
     {
-        $sql = 'UPDATE dtb_product_class SET visible = true WHERE id IN (
-SELECT
-t1.id AS product_class_id
-FROM dtb_product_class AS t1
-LEFT JOIN dtb_product AS t2 on t1.product_id = t2.id
-WHERE t2.product_status_id = 3 AND t1.visible = false
-)';
+        $sql = 'UPDATE
+            dtb_product_class
+        SET
+            visible = true
+        WHERE
+            id IN(
+                SELECT
+                    product_class_id
+                FROM
+                    (
+                        SELECT
+                            t1.id AS product_class_id
+                        FROM
+                            dtb_product_class AS t1
+                            LEFT JOIN
+                                dtb_product AS t2
+                            on  t1.product_id = t2.id
+                        WHERE
+                            t2.product_status_id = 3
+                        AND t1.visible = false
+                    ) AS t
+            )';
+
         $em->exec($sql);
     }
 }
