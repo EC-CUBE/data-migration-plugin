@@ -49,6 +49,11 @@ class ConfigController extends AbstractController
         $form = $this->createForm(ConfigType::class);
         $form->handleRequest($request);
 
+        // date.timezoneにハマる人が多いらしい
+        if (!ini_get('date.timezone')) {
+            $this->addDanger('date.timezone が設定してください。', 'admin');
+        }
+
         if ($form->isSubmitted() && $form->isValid()) {
             // logをオフにしてメモリを減らす
             $em->getConfiguration()->setSQLLogger(null);
