@@ -94,7 +94,7 @@ file that was distributed with this source code.
                                 <div class="col">
                                     <div class="form-check">
                                         <input type="checkbox" id="{{ form.customer_order_only.vars.id }}" name="{{ form.customer_order_only.vars.full_name }}" class="form-check-input" value="1" />
-                                        <label class="form-check-label" for="{{ form.customer_order_only.vars.id }}">会員と受注データのみ移行する</label>
+                                        <label class="form-check-label" for="{{ form.customer_order_only.vars.id }}">{{ form.customer_order_only.vars.label }}</label>
                                         <i data-tooltip="true"
                                            data-placement="top"
                                            data-original-title="このオプションを利用するには、一度全データが移行されている必要があります。新サイトの構築期間中に、旧サイトで発生した会員や受注データを取り込みたい場合に使用してください" class="fa fa-question-circle fa-lg ml-1"></i>

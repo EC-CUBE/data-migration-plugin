@@ -29,7 +29,7 @@ class ConfigType extends AbstractType
                     ]),
                 ],
             ])->add('customer_order_only', CheckboxType::class, [
-                'label' => '会員と受注データのみ移行する',
+                'label' => '会員と受注データのみ移行する(一度データ移行を実施している必要があります)',
                 'required' => false,
             ])
             ;
