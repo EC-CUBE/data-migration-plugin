@@ -107,9 +107,15 @@ class ConfigController extends AbstractController
                 $this->fix24baseinfo($em, $csvDir);
             }
 
-            $this->saveCustomer($em, $csvDir);
-            $this->saveProduct($em, $csvDir);
-            $this->saveOrder($em, $csvDir);
+            // 会員・受注のみ移行
+            if ($form['customer_order_only']->getData()) {
+                $this->saveCustomerAndOrder($em, $csvDir);
+            // 全データ移行
+            } else {
+                $this->saveCustomer($em, $csvDir);
+                $this->saveProduct($em, $csvDir);
+                $this->saveOrder($em, $csvDir);
+            }
 
             // 削除
             $fs = new Filesystem();
@@ -122,6 +128,57 @@ class ConfigController extends AbstractController
             'form' => $form->createView(),
             'max_upload_size' => self::checkUploadSize(),
         ];
+    }
+
+    private function saveCustomerAndOrder($em, $csvDir)
+    {
+        $em->beginTransaction();
+        $platform = $em->getDatabasePlatform()->getName();
+
+        if ($platform == 'mysql') {
+            $em->exec('SET FOREIGN_KEY_CHECKS = 0;');
+            $em->exec("SET SESSION sql_mode = 'NO_AUTO_VALUE_ON_ZERO'"); // STRICT_TRANS_TABLESを無効にする。
+        } else {
+            $em->exec('SET session_replication_role = replica;'); // need super user
+        }
+
+        // 会員
+        $this->saveToC($em, $csvDir, 'dtb_customer');
+        $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
+
+        // 受注
+        $this->saveToO($em, $csvDir, 'dtb_order');
+        $this->saveToO($em, $csvDir, 'dtb_shipping');
+        $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
+        $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
+
+        if (!empty($this->order_item)) {
+            // すでに移行されている税率設定から取得する
+            $sql = 'SELECT * FROM dtb_tax_rule WHERE product_id IS NULL AND product_class_id IS NULL ORDER BY apply_date DESC';
+            $tax_rules = $em->fetchAll($sql);
+            foreach ($tax_rules as $tax_rule) {
+                $this->tax_rule[$tax_rule['apply_date']] = [
+                    'rounding_type_id' => $tax_rule['rounding_type_id'],
+                    'tax_rate' => $tax_rule['tax_rate'],
+                    'apply_date' => $tax_rule['apply_date'],
+                ];
+            }
+            $this->saveOrderItem($em);
+        }
+
+        if ($platform == 'mysql') {
+            $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
+        } else {
+            $this->setIdSeq($em, 'dtb_customer');
+            $this->setIdSeq($em, 'dtb_customer_address');
+            $this->setIdSeq($em, 'dtb_order');
+            $this->setIdSeq($em, 'dtb_order_item');
+            $this->setIdSeq($em, 'dtb_shipping');
+            $this->setIdSeq($em, 'dtb_mail_history');
+        }
+
+        $em->commit();
+        $this->addSuccess('会員データ・受注データを登録しました。', 'admin');
     }
 
     private function saveCustomer($em, $csvDir)
