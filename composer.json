@@ -1,6 +1,6 @@
 {
     "name": "ec-cube/DataMigration4",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "description": "データ移行プラグイン",
     "type": "eccube-plugin",
     "repositories": [
