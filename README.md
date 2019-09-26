@@ -17,6 +17,7 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
  - dtb_product_class
  - dtb_class_category
  - dtb_class_name
+ - dtb_product_image
  - mtb_sale_type
 ### カテゴリデータ
  - dtb_category
@@ -37,8 +38,6 @@ https://www.ec-cube.net/products/detail.php?product_id=1804
 - 会員データ メールマガジン送付について [メルマガ管理プラグイン](https://www.ec-cube.net/products/detail.php?product_id=1760)
 
 ## :cloud: 移行出来ないデータ
-### 商品画像
- - dtb_product_image
 ### カート
  - dtb_cart
  - dtb_cart_item
