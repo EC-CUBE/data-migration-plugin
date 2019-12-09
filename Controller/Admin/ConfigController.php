@@ -7,7 +7,7 @@ use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
 use Eccube\Doctrine\DBAL\Types\UTCDateTimeTzType;
 use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
-use Plugin\DataMigration4\Util\BulkInsertQuery;
+use nobuhiko\BulkInsertQuery\BulkInsertQuery;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Component\HttpFoundation\Request;
