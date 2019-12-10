@@ -23,6 +23,9 @@ class ConfigController extends AbstractController
     /** @var array */
     protected $tax_rule = [];
 
+    /** @var array */
+    protected $delivery_time = [];
+
     /**
      * constructor.
      *
@@ -988,13 +991,14 @@ class ConfigController extends AbstractController
 
             // todo mtb_order_status.display_order_count
 
+            $this->saveToO($em, $csvDir, 'dtb_delivtime', 'dtb_delivery_time');
+
             $this->saveToO($em, $csvDir, 'dtb_order');
             $this->saveToO($em, $csvDir, 'dtb_shipping');
 
             $this->saveToO($em, $csvDir, 'dtb_payment');
             $this->saveToO($em, $csvDir, 'dtb_deliv', 'dtb_delivery');
             $this->saveToO($em, $csvDir, 'dtb_delivfee', 'dtb_delivery_fee');
-            $this->saveToO($em, $csvDir, 'dtb_delivtime', 'dtb_delivery_time');
 
             $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
 
@@ -1096,7 +1100,10 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'id' && $tableName == 'dtb_delivery_fee') {
                         $value[$column] = $i; // todo
                     } elseif ($column == 'id' && $tableName == 'dtb_delivery_time') {
-                        $value[$column] = $data['time_id'];
+                        // deliv_idとtime_idで複合主キーだったのが、idのみの主キーとなったため、連番で付与する.
+                        $value[$column] = $i;
+                        // dtb_order.deliv_idとdtb_shipping.time_idでお届け時間を特定するため、ここで保持しておく.
+                        $this->delivery_time[$data['deliv_id']][$data['time_id']] = $i;
                     } elseif ($column == 'order_status_id') {
                         // 退会が追加された
                         $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
@@ -1235,6 +1242,9 @@ class ConfigController extends AbstractController
 
                         $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
                         $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
+                        if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
+                            $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
+                        }
 
                         // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
                         if (!empty($data['shipping_commit_date'])) {
