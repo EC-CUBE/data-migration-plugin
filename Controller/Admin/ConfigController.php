@@ -307,7 +307,7 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'point') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
                     } elseif ($column == 'salt') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : ''; // not null
+                        $value[$column] = !empty($data[$column]) ? $data[$column] : null;  // @see https://github.com/EC-CUBE/data-migration-plugin/issues/38
                     } elseif ($column == 'creator_id') {
                         $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
                     } elseif ($column == 'plg_mailmagazine_flg') {
