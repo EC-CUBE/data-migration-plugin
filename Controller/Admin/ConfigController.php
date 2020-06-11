@@ -121,9 +121,9 @@ class ConfigController extends AbstractController
                 $this->saveCustomerAndOrder($em, $csvDir);
                 // 全データ移行
             } else {
-                //$this->saveCustomer($em, $csvDir);
+                $this->saveCustomer($em, $csvDir);
                 $this->saveProduct($em, $csvDir);
-                //$this->saveOrder($em, $csvDir);
+                $this->saveOrder($em, $csvDir);
             }
 
             // 削除
@@ -1337,6 +1337,20 @@ class ConfigController extends AbstractController
                         if (isset($data['product_id']) && $data['product_id'] === '0'
                             && isset($data['product_class_id']) && $data['product_class_id'] === '0') {
                             $value['product_id'] = null;
+                            $value['product_class_id'] = null;
+                        }
+
+                        // 3系対応
+                        if (!$value['pref_id']) {
+                            $value['pref_id'] = null;
+                        }
+                        if (!$value['country_id']) {
+                            $value['country_id'] = null;
+                        }
+                        if (!$value['product_id']) {
+                            $value['product_id'] = null;
+                        }
+                        if (!$value['product_class_id']) {
                             $value['product_class_id'] = null;
                         }
 
