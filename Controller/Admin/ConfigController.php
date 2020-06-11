@@ -110,13 +110,19 @@ class ConfigController extends AbstractController
                 $this->fix24baseinfo($em, $csvDir);
             }
 
+            $this->flag_3 = false;
+            // 3系の場合
+            if (file_exists($csvDir.'dtb_product.csv')) {
+                $this->flag_3 = true;
+            }
+
             // 会員・受注のみ移行
             if ($form['customer_order_only']->getData()) {
                 $this->saveCustomerAndOrder($em, $csvDir);
-            // 全データ移行
+                // 全データ移行
             } else {
-                $this->saveCustomer($em, $csvDir);
-                $this->saveProduct($em, $csvDir);
+                //$this->saveCustomer($em, $csvDir);
+                //$this->saveProduct($em, $csvDir);
                 $this->saveOrder($em, $csvDir);
             }
 
@@ -147,7 +153,12 @@ class ConfigController extends AbstractController
 
         // 会員
         $this->saveToC($em, $csvDir, 'dtb_customer');
-        $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
+
+        if ($this->flag_3) {
+            $this->saveToC($em, $csvDir, 'dtb_customer_address');
+        } else {
+            $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
+        }
 
         // 受注
         $this->saveToO($em, $csvDir, 'dtb_order');
@@ -202,8 +213,12 @@ class ConfigController extends AbstractController
             $this->saveToC($em, $csvDir, 'mtb_job', null, true);
             $this->saveToC($em, $csvDir, 'mtb_sex', null, true);
             $this->saveToC($em, $csvDir, 'dtb_customer');
-            //$index = $this->saveTo($em, $csvDir, 'dtb_customer', 'dtb_customer_address'); // 3と仕様が違う
-            $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
+            if ($this->flag_3) {
+                // fixme 余計なデータが移行される
+                $this->saveToC($em, $csvDir, 'dtb_customer_address');
+            } else {
+                $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1);
+            }
 
             $this->saveToC($em, $csvDir, 'mtb_authority', null, true);
             $this->saveToC($em, $csvDir, 'dtb_member', null, true);
@@ -347,7 +362,13 @@ class ConfigController extends AbstractController
 
     private function saveProduct($em, $csvDir)
     {
-        if (file_exists($csvDir.'dtb_products.csv') && filesize($csvDir.'dtb_products.csv') > 0) {
+        if ($this->flag_3) {
+            $product_db_name = 'dtb_product';
+        } else {
+            $product_db_name = 'dtb_products';
+        }
+
+        if (file_exists($csvDir.$product_db_name.'.csv') && filesize($csvDir.$product_db_name.'.csv') > 0) {
             $em->beginTransaction();
 
             $platform = $em->getDatabasePlatform()->getName();
@@ -364,22 +385,32 @@ class ConfigController extends AbstractController
                 $this->fix211classCombination($em, $platform, $csvDir);
             }
 
-            $this->saveToP($em, $csvDir, 'dtb_products', 'dtb_product');
-            $this->saveToP($em, $csvDir, 'dtb_products_class', 'dtb_product_class');
-            $this->saveToP($em, $csvDir, 'dtb_classcategory', 'dtb_class_category');
-            $this->saveToP($em, $csvDir, 'dtb_class', 'dtb_class_name');
-            $this->saveToP($em, $csvDir, 'dtb_category');
-            $this->saveToP($em, $csvDir, 'dtb_product_categories', 'dtb_product_category');
+            if ($this->flag_3) {
+                $this->saveToP($em, $csvDir, 'dtb_product');
+                $this->saveToP($em, $csvDir, 'dtb_product_class');
+                $this->saveToP($em, $csvDir, 'dtb_class_category');
+                $this->saveToP($em, $csvDir, 'dtb_class_name');
+                $this->saveToP($em, $csvDir, 'dtb_product_category');
+                $this->saveToP($em, $csvDir, 'dtb_product_stock');
+                $this->saveToP($em, $csvDir, 'dtb_product_image');
 
+            } else {
+                $this->saveToP($em, $csvDir, 'dtb_products', 'dtb_product');
+                $this->saveToP($em, $csvDir, 'dtb_products_class', 'dtb_product_class');
+                $this->saveToP($em, $csvDir, 'dtb_classcategory', 'dtb_class_category');
+                $this->saveToP($em, $csvDir, 'dtb_class', 'dtb_class_name');
+                $this->saveToP($em, $csvDir, 'dtb_product_categories', 'dtb_product_category');
+
+                // 在庫
+                $this->saveStock($em);
+                // 画像
+                $this->saveProductImage($em);
+            }
+
+            $this->saveToP($em, $csvDir, 'dtb_category');
             if (file_exists($csvDir.'mtb_product_type.csv')) {
                 $this->saveToP($em, $csvDir, 'mtb_product_type', 'mtb_sale_type', true);
             }
-
-            // 在庫
-            $this->saveStock($em);
-
-            // 画像
-            $this->saveProductImage($em);
 
             // 削除済み商品を4系のデータ構造に合わせる
             $this->fixDeletedProduct($em);
@@ -474,7 +505,8 @@ class ConfigController extends AbstractController
                         $value[$column] = isset($data['comment3'])
                             ? mb_substr($data['comment3'], 0, 3999)
                             : null;
-                    } elseif ($column == 'free_area') {
+                    } elseif ($column == 'free_area' && isset($data['sub_title1'])) {
+
                         $value[$column] = $data['sub_title1']."\n".$data['sub_comment1']."\n"
                             .$data['sub_title2']."\n".$data['sub_comment2']."\n"
                             .$data['sub_title3']."\n".$data['sub_comment3']."\n"
@@ -530,11 +562,11 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'id' && $tableName == 'dtb_category') {
                         $value[$column] = $data['category_id'];
                     } elseif ($column == 'id' && $tableName == 'dtb_class_category') {
-                        $value[$column] = $data['classcategory_id'];
+                        $value[$column] = ($this->flag_3) ? $data['class_category_id']:$data['classcategory_id'];
                     } elseif ($column == 'visible' && $tableName == 'dtb_class_category') {
                         $value[$column] = ($data['del_flg']) ? 0 : 1;
                     } elseif ($column == 'id' && $tableName == 'dtb_class_name') {
-                        $value[$column] = $data['class_id'];
+                        $value[$column] = ($this->flag_3) ? $data['class_name_id']:$data['class_id'];
 
                     // 共通処理
                     } elseif ($column == 'discriminator_type') {
@@ -991,16 +1023,23 @@ class ConfigController extends AbstractController
 
             // todo mtb_order_status.display_order_count
 
-            $this->saveToO($em, $csvDir, 'dtb_delivtime', 'dtb_delivery_time');
+            if ($this->flag_3) {
+                $this->saveToO($em, $csvDir, 'dtb_delivery_time');
+                $this->saveToO($em, $csvDir, 'dtb_delivery');
+                $this->saveToO($em, $csvDir, 'dtb_delivery_fee');
+                $this->saveToO($em, $csvDir, 'dtb_mail_history');
 
+            } else {
+                $this->saveToO($em, $csvDir, 'dtb_delivtime', 'dtb_delivery_time');
+                $this->saveToO($em, $csvDir, 'dtb_deliv', 'dtb_delivery');
+                $this->saveToO($em, $csvDir, 'dtb_delivfee', 'dtb_delivery_fee');
+                $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
+            }
+
+            // fixme dtb_delivery_time のあとにやらなければダメ
             $this->saveToO($em, $csvDir, 'dtb_order');
             $this->saveToO($em, $csvDir, 'dtb_shipping');
-
             $this->saveToO($em, $csvDir, 'dtb_payment');
-            $this->saveToO($em, $csvDir, 'dtb_deliv', 'dtb_delivery');
-            $this->saveToO($em, $csvDir, 'dtb_delivfee', 'dtb_delivery_fee');
-
-            $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
 
             if (!isset($this->product_class_id)) {
                 sleep(5);
@@ -1010,7 +1049,6 @@ class ConfigController extends AbstractController
 
             // todo ダウンロード販売の処理
             $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
-            //$this->saveToO($em, $csvDir, 'dtb_shipment_item', 'dtb_order_item');
 
             if (!empty($this->order_item)) {
                 $this->saveOrderItem($em);
@@ -1088,8 +1126,10 @@ class ConfigController extends AbstractController
                     }
                 }
 
-                // 物理削除になったので
-                //if (isset($data['del_flg']) && $data['del_flg'] == 1) continue;
+                // 3の差を埋める
+                if ($this->flag_3 && isset($data['delivery_id'])) {
+                    $data['deliv_id'] = $data['delivery_id'];
+                }
 
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
@@ -1102,8 +1142,10 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'id' && $tableName == 'dtb_delivery_time') {
                         // deliv_idとtime_idで複合主キーだったのが、idのみの主キーとなったため、連番で付与する.
                         $value[$column] = $i;
+
                         // dtb_order.deliv_idとdtb_shipping.time_idでお届け時間を特定するため、ここで保持しておく.
                         $this->delivery_time[$data['deliv_id']][$data['time_id']] = $i;
+
                     } elseif ($column == 'order_status_id') {
                         // 退会が追加された
                         $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
@@ -1206,7 +1248,8 @@ class ConfigController extends AbstractController
                         $value['order_date'] = self::convertTz($data['create_date']);
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
-                        if ($data['deliv_fee'] > 0) {
+                        // 3は delivery_fee_total
+                        if (isset($data['deliv_fee']) && $data['deliv_fee'] > 0) {
                             $this->order_item[$data['id']]['deliv_fee'] = [
                                 'price' => $data['deliv_fee'],
                                 'order_date' => $value['order_date'],
@@ -1224,7 +1267,8 @@ class ConfigController extends AbstractController
                                 'order_date' => $value['order_date'],
                             ];
                         }
-                        if ($data['use_point'] > 0) {
+                        // todo 3はプラグイン
+                        if (isset($data['use_point']) && $data['use_point'] > 0) {
                             $this->order_item[$data['id']]['use_point'] = [
                                 'price' => $data['use_point'],
                                 'order_date' => $value['order_date'],
@@ -1240,17 +1284,25 @@ class ConfigController extends AbstractController
                         $value['id'] = $i;
                         $this->shipping_id[$data['order_id']][$data['shipping_id']] = $i;
 
-                        $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
-                        $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
-                        if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
-                            $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
-                        }
+                        if ($this->flag_3) {
 
-                        // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
-                        if (!empty($data['shipping_commit_date'])) {
-                            $value['shipping_date'] = $data['shipping_commit_date'];
-                        } elseif (!empty($this->shipping_order[$data['order_id']]['commit_date'])) {
-                            $value['shipping_date'] = $this->shipping_order[$data['order_id']]['commit_date'];
+                            if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
+                                $value['time_id'] = $this->delivery_time[$data['delivery_id']][$data['time_id']];
+                            }
+
+                        } else {
+
+                            $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
+                            $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
+                            if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
+                                $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
+                            }
+                            // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
+                            if (!empty($data['shipping_commit_date'])) {
+                                $value['shipping_date'] = $data['shipping_commit_date'];
+                            } elseif (!empty($this->shipping_order[$data['order_id']]['commit_date'])) {
+                                $value['shipping_date'] = $this->shipping_order[$data['order_id']]['commit_date'];
+                            }
                         }
 
                         break;
@@ -1329,12 +1381,17 @@ class ConfigController extends AbstractController
                         $value['order_item_type_id'] = 1; // 商品で固定する
                         $value['currency_code'] = 'JPY'; // とりあえず固定
 
-                        if (isset($this->shipping_id[$data['order_id']][0])) {
-                            $value['shipping_id'] = $this->shipping_id[$data['order_id']][0];
-                        } else {
-                            $value['shipping_id'] = null; // ダウンロード販売
-                        }
+                        if ($this->flag_3) {
+                            // 1行目だけを移行する
+                            $value['shipping_id'] = array_values($this->shipping_id[$data['order_id']])[0];
 
+                        } else {
+                            if (isset($this->shipping_id[$data['order_id']][0])) {
+                                $value['shipping_id'] = $this->shipping_id[$data['order_id']][0];
+                            } else {
+                                $value['shipping_id'] = null; // ダウンロード販売
+                            }
+                        }
                         break;
 
                     case 'dtb_mail_history':

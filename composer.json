@@ -1,6 +1,6 @@
 {
     "name": "ec-cube/DataMigration4",
-    "version": "1.5.2",
+    "version": "2.0.0",
     "description": "データ移行プラグイン",
     "type": "eccube-plugin",
     "repositories": [
@@ -10,7 +10,7 @@
         }
     ],
     "require": {
-        "ec-cube/plugin-installer": "~0.0.3",
+        "ec-cube/plugin-installer": "~0.0.8",
         "pear/pear-core-minimal" : "^1.10.0alpha2",
         "pear/archive_tar" : "^1.4.3",
         "wapmorgan/unified-archive": "^0.0.3",
