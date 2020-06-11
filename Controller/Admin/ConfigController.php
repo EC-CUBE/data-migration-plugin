@@ -122,8 +122,8 @@ class ConfigController extends AbstractController
                 // 全データ移行
             } else {
                 //$this->saveCustomer($em, $csvDir);
-                //$this->saveProduct($em, $csvDir);
-                $this->saveOrder($em, $csvDir);
+                $this->saveProduct($em, $csvDir);
+                //$this->saveOrder($em, $csvDir);
             }
 
             // 削除
@@ -480,6 +480,21 @@ class ConfigController extends AbstractController
                 // 1行目をkeyとした配列を作る
                 $data = array_combine($key, $row);
 
+                if ($this->flag_3) {
+                    if (isset($data['class_category_id1'])) {
+                        $data['classcategory_id1'] = $data['class_category_id1'];
+                    }
+                    if (isset($data['class_category_id2'])) {
+                        $data['classcategory_id2'] = $data['class_category_id2'];
+                    }
+                    if (isset($data['class_category_id'])) {
+                        $data['classcategory_id'] = $data['class_category_id'];
+                    }
+                    if (isset($data['class_name_id'])) {
+                        $data['class_id'] = $data['class_name_id'];
+                    }
+                }
+
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
                     if ($column == 'id' && $tableName == 'dtb_product') {
@@ -562,11 +577,11 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'id' && $tableName == 'dtb_category') {
                         $value[$column] = $data['category_id'];
                     } elseif ($column == 'id' && $tableName == 'dtb_class_category') {
-                        $value[$column] = ($this->flag_3) ? $data['class_category_id']:$data['classcategory_id'];
+                        $value[$column] = $data['classcategory_id'];
                     } elseif ($column == 'visible' && $tableName == 'dtb_class_category') {
                         $value[$column] = ($data['del_flg']) ? 0 : 1;
                     } elseif ($column == 'id' && $tableName == 'dtb_class_name') {
-                        $value[$column] = ($this->flag_3) ? $data['class_name_id']:$data['class_id'];
+                        $value[$column] = $data['class_id'];
 
                     // 共通処理
                     } elseif ($column == 'discriminator_type') {
