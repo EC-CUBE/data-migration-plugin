@@ -582,6 +582,10 @@ class ConfigController extends AbstractController
                         $value[$column] = ($data['del_flg']) ? 0 : 1;
                     } elseif ($column == 'id' && $tableName == 'dtb_class_name') {
                         $value[$column] = $data['class_id'];
+                   } elseif ($column == 'id' && $tableName == 'dtb_product_stock') {
+                        $value[$column] = $data['product_stock_id'];
+                   } elseif ($column == 'id' && $tableName == 'dtb_product_image') {
+                        $value[$column] = $data['product_image_id'];
 
                     // 共通処理
                     } elseif ($column == 'discriminator_type') {
@@ -1207,7 +1211,13 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_id') {
                         $value[$column] = isset($data['deliv_id']) ? $data['deliv_id'] : null;
                     } elseif ($column == 'delivery_time') {
-                        $value[$column] = isset($data['deliv_time']) ? $data['deliv_time'] : null;
+                        if (isset($data['deliv_time'])) {
+                            $value[$column] = $data['deliv_time'];
+                        } elseif (isset($data['delivery_time'])) {
+                            $value[$column] = $data['delivery_time'];
+                        } else {
+                            $value[$column] = null;
+                        }
                     } elseif ($column == 'fee') {
                         $value[$column] = !empty($data['fee']) ? $data['fee'] : 0;
                     // --> payment

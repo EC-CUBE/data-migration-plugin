@@ -24,7 +24,7 @@ class ConfigType extends AbstractType
                 'constraints' => [
                     new NotBlank(['message' => 'ファイルを選択してください。']),
                     new File([
-                        'mimeTypes' => ['application/zip', 'application/x-tar', 'application/x-gzip'],
+                        'mimeTypes' => ['application/zip', 'application/x-tar', 'application/x-gzip', 'application/gzip'],
                         'mimeTypesMessage' => 'zipファイル、tarファイル、tar.gzファイルのいずれかをアップロードしてください。',
                     ]),
                 ],
