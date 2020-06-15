@@ -545,7 +545,7 @@ class ConfigController extends AbstractController
                             $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id2'];
                         }
                     } elseif ($column == 'delivery_fee') {
-                        $value[$column] = isset($data['delivery_fee']) ? $data['delivery_fee'] : null;
+                        $value[$column] = (isset($data['delivery_fee']) && is_numeric($data['delivery_fee']) ) ? $data['delivery_fee'] : null;
                     } elseif ($column == 'stock') {
                         $value[$column] = isset($data['stock']) && $data['stock'] !== ''
                             ? $data['stock']
