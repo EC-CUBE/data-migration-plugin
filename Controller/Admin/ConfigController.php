@@ -156,6 +156,8 @@ class ConfigController extends AbstractController
 
         if ($this->flag_3) {
             $this->saveToC($em, $csvDir, 'dtb_customer_address');
+            $this->saveToO($em, $csvDir, 'dtb_delivery_time');
+
         } else {
             $this->saveToC($em, $csvDir, 'dtb_other_deliv', 'dtb_customer_address', false, 1/*$index*/);
         }
