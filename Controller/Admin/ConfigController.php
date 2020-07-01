@@ -53,11 +53,6 @@ class ConfigController extends AbstractController
         $form = $this->createForm(ConfigType::class);
         $form->handleRequest($request);
 
-        // date.timezoneにハマる人が多いらしい
-        if (!ini_get('date.timezone')) {
-            $this->addDanger('date.timezone が設定してください。', 'admin');
-        }
-
         if ($form->isSubmitted() && $form->isValid()) {
             // logをオフにしてメモリを減らす
             $em->getConfiguration()->setSQLLogger(null);
@@ -1581,10 +1576,9 @@ class ConfigController extends AbstractController
 
 
     // タイムゾーンの変換
-    // ECCUBE_TIMEZONE= への対応
     private function convertTz($datetime)
     {
-        $date = new \DateTime($datetime, new \DateTimeZone(ini_get('date.timezone')));
+        $date = new \DateTime($datetime, new \DateTimeZone($this->eccubeConfig->get('timezone')));
         $date->setTimezone(new \DateTimeZone('UTC'));
 
         return $date->format($this->em->getDatabasePlatform()->getDateTimeTzFormatString());
