@@ -253,6 +253,9 @@ class ConfigController extends AbstractController
         if (($handle = fopen($tmpDir.$csvName.'.csv', 'r')) !== false) {
             // 文字コード問題が起きる可能性が高いので後で調整が必要になると思う
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
+
             $keySize = count($key);
 
             $columns = $em->getSchemaManager()->listTableColumns($tableName);
@@ -269,7 +272,7 @@ class ConfigController extends AbstractController
                 $value = [];
 
                 // 1行目をkeyとした配列を作る
-                $data = array_combine($key, $row);
+                $data = $this->convertNULL(array_combine($key, $row));
 
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
@@ -459,6 +462,8 @@ class ConfigController extends AbstractController
         if (($handle = fopen($tmpDir.$csvName.'.csv', 'r')) !== false) {
             // 文字コード問題が起きる可能性が高いので後で調整が必要になると思う
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
             $keySize = count($key);
 
             $columns = $em->getSchemaManager()->listTableColumns($tableName);
@@ -475,7 +480,7 @@ class ConfigController extends AbstractController
                 $value = [];
 
                 // 1行目をkeyとした配列を作る
-                $data = array_combine($key, $row);
+                $data = $this->convertNULL(array_combine($key, $row));
 
                 if ($this->flag_3) {
                     if (isset($data['class_category_id1'])) {
@@ -652,14 +657,20 @@ class ConfigController extends AbstractController
 
     private function fix24baseinfo($em, $tmpDir)
     {
+        if (!file_exists($tmpDir.'dtb_baseinfo.csv')) {
+            return;
+        }
+
         if (($handle = fopen($tmpDir.'dtb_baseinfo.csv', 'r')) !== false) {
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
             $keySize = count($key);
 
             $add_value = [];
             while (($row = fgetcsv($handle)) !== false) {
                 // 1行目をkeyとした配列を作る
-                $this->baseinfo = array_combine($key, $row);
+                $this->baseinfo = $this->convertNULL(array_combine($key, $row));
 
                 $value['tax_rule_id'] = 1;
                 $value['calc_rule'] = $this->baseinfo['tax_rule'];
@@ -686,12 +697,14 @@ class ConfigController extends AbstractController
     {
         if (($handle = fopen($tmpDir.'dtb_order.csv', 'r')) !== false) {
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
             $keySize = count($key);
 
             $i = 1;
             while (($row = fgetcsv($handle)) !== false) {
                 // 1行目をkeyとした配列を作る
-                $data = array_combine($key, $row);
+                $data = $this->convertNULL(array_combine($key, $row));
 
                 $value = [];
 
@@ -737,12 +750,14 @@ class ConfigController extends AbstractController
     {
         if (($handle = fopen($tmpDir.'dtb_products_class.csv', 'r')) !== false) {
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
             $keySize = count($key);
 
             $i = -1;
             while (($row = fgetcsv($handle)) !== false) {
                 // 1行目をkeyとした配列を作る
-                $data = array_combine($key, $row);
+                $data = $this->convertNULL(array_combine($key, $row));
                 // 規格がある場合,
                 if ($data['classcategory_id1'] != 0 && $data['classcategory_id2'] != 0) {
                     $data['classcategory_id1'] = 0;
@@ -770,6 +785,8 @@ class ConfigController extends AbstractController
     {
         if (($handle = fopen($tmpDir.'dtb_class_combination.csv', 'r')) !== false) {
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
             $keySize = count($key);
 
             if ($platform == 'mysql') {
@@ -802,7 +819,7 @@ class ConfigController extends AbstractController
             $batchSize = 20;
             while (($row = fgetcsv($handle)) !== false) {
                 // 1行目をkeyとした配列を作る
-                $data = array_combine($key, $row);
+                $data = $this->convertNULL(array_combine($key, $row));
 
                 if (!$data['parent_class_combination_id']) {
                     $data['parent_class_combination_id'] = null;
@@ -1115,6 +1132,8 @@ class ConfigController extends AbstractController
         if (($handle = fopen($tmpDir.$csvName.'.csv', 'r')) !== false) {
             // 文字コード問題が起きる可能性が高いので後で調整が必要になると思う
             $key = fgetcsv($handle);
+            // phpmyadminのcsvに余計なスペースが入っているので取り除く
+            $key = array_filter(array_map('trim', $key));
             $keySize = count($key);
 
             $columns = $em->getSchemaManager()->listTableColumns($tableName);
@@ -1131,7 +1150,7 @@ class ConfigController extends AbstractController
                 $value = [];
 
                 // 1行目をkeyとした配列を作る
-                $data = array_combine($key, $row);
+                $data = $this->convertNULL(array_combine($key, $row));
 
                 // order_ の文字を除去
                 foreach ($data as $k => $v) {
@@ -1621,5 +1640,23 @@ class ConfigController extends AbstractController
             )';
 
         $em->exec($sql);
+    }
+
+
+    /**
+     * "NULL" -> null
+     *
+     * @param mixed $data
+     * @access private
+     * @return void
+     */
+    private function convertNULL($data)
+    {
+        foreach($data as &$v) {
+            if ($v === "NULL") {
+                $v = null;
+            }
+        }
+        return $data;
     }
 }
