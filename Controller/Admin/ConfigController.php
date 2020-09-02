@@ -1317,7 +1317,9 @@ class ConfigController extends AbstractController
                             $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
                             $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
                             if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
-                                $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
+                                if (!empty($this->delivery_time)) {
+                                    $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
+                                }
                             }
                             // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
                             if (!empty($data['shipping_commit_date'])) {
