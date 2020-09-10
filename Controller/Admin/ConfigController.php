@@ -490,6 +490,9 @@ class ConfigController extends AbstractController
                     if (isset($data['class_name_id'])) {
                         $data['class_id'] = $data['class_name_id'];
                     }
+                    if (isset($data['description_detail'])) {
+                        $data['main_comment'] = $data['description_detail'];
+                    }
                 }
 
                 // Schemaにあわせた配列を作成する
