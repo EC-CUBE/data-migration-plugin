@@ -579,7 +579,7 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'class_name_id') {
                         $value[$column] = isset($data['class_id']) ? $data['class_id'] : null;
                     } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
+                        $value[$column] = (isset($data[$column]) && strpos($data[$column], '000') === false) ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
                     } elseif ($column == 'login_date' || $column == 'first_buy_date') {
                         $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
                     } elseif ($column == 'creator_id') {
