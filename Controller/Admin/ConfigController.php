@@ -393,6 +393,8 @@ class ConfigController extends AbstractController
                 $this->saveToP($em, $csvDir, 'dtb_product_category');
                 $this->saveToP($em, $csvDir, 'dtb_product_stock');
                 $this->saveToP($em, $csvDir, 'dtb_product_image');
+                $this->saveToP($em, $csvDir, 'dtb_product_tag');
+                $this->saveToP($em, $csvDir, 'mtb_tag', 'dtb_tag');
 
             } else {
                 $this->saveToP($em, $csvDir, 'dtb_products', 'dtb_product');
@@ -400,6 +402,8 @@ class ConfigController extends AbstractController
                 $this->saveToP($em, $csvDir, 'dtb_classcategory', 'dtb_class_category');
                 $this->saveToP($em, $csvDir, 'dtb_class', 'dtb_class_name');
                 $this->saveToP($em, $csvDir, 'dtb_product_categories', 'dtb_product_category');
+                $this->saveToP($em, $csvDir, 'dtb_product_status', 'dtb_product_tag');
+                $this->saveToP($em, $csvDir, 'mtb_status', 'dtb_tag');
 
                 // 在庫
                 $this->saveStock($em);
@@ -424,6 +428,13 @@ class ConfigController extends AbstractController
             $em->exec('UPDATE dtb_product_class SET class_category_id1 = NULL WHERE class_category_id1 not in (select id from dtb_class_category)');
             $em->exec('UPDATE dtb_product_class SET class_category_id2 = NULL WHERE class_category_id2 not in (select id from dtb_class_category)');
 
+            $em->exec('delete from dtb_product_tag where id in (
+                select t1.id from dtb_product_tag t1 left join dtb_tag t2 on t1.tag_id = t2.id where t2.id is null
+            );');
+            $em->exec('delete from dtb_product_tag where id in (
+                select t1.id from dtb_product_tag t1 left join dtb_product t2 on t1.product_id = t2.id where t2.id is null
+            );');
+
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
             } else {
@@ -435,6 +446,8 @@ class ConfigController extends AbstractController
                 $this->setIdSeq($em, 'dtb_category');
                 $this->setIdSeq($em, 'dtb_product_stock');
                 $this->setIdSeq($em, 'dtb_product_image');
+                $this->setIdSeq($em, 'dtb_product_tag');
+                $this->setIdSeq($em, 'dtb_tag');
             }
 
             $em->commit();
@@ -591,7 +604,14 @@ class ConfigController extends AbstractController
                         $value[$column] = $data['product_stock_id'];
                    } elseif ($column == 'id' && $tableName == 'dtb_product_image') {
                         $value[$column] = $data['product_image_id'];
-
+                    } elseif ($column == 'id' && $tableName == 'dtb_product_tag') {
+                        $value[$column] = $i;
+                    } elseif ($column == 'tag_id' && $tableName == 'dtb_product_tag') {
+                        if ($this->flag_3) {
+                            $value[$column] = isset($data['tag']) && strlen($data['tag'] > 0) ? $data['tag'] : 0;
+                        } else {
+                            $value[$column] = isset($data['product_status_id']) && strlen($data['product_status_id'] > 0) ? $data['product_status_id'] : 0;
+                        }
                     // 共通処理
                     } elseif ($column == 'discriminator_type') {
                         $search = ['dtb_', 'mtb_', '_'];
