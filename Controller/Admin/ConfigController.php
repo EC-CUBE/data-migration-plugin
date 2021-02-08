@@ -1056,9 +1056,11 @@ class ConfigController extends AbstractController
 
     private function setIdSeq($em, $tableName)
     {
-        $max = $em->fetchColumn('SELECT max(id) + 1  FROM '.$tableName);
-        if ($max) {
-            $em->exec("SELECT setval('".$tableName."_id_seq', $max);");
+        $max = $em->fetchColumn('SELECT coalesce(max(id), 0) + 1  FROM '.$tableName);
+        $seq = $tableName.'_id_seq';
+        $count = $em->fetchColumn("select count(*) from pg_class where relname = '$seq';");
+        if ($count) {
+            $em->exec("SELECT setval('$seq', $max);");
         }
     }
 
