@@ -1165,8 +1165,13 @@ class ConfigController extends AbstractController
                 }
 
                 // 3の差を埋める
-                if ($this->flag_3 && isset($data['delivery_id'])) {
-                    $data['deliv_id'] = $data['delivery_id'];
+                if ($this->flag_3) {
+                    if (isset($data['delivery_id'])) {
+                        $data['deliv_id'] = $data['delivery_id'];
+                    }
+                    if ('dtb_order' === $tableName && isset($data['delivery_fee_total'])) {
+                        $data['deliv_fee'] = $data['delivery_fee_total'];
+                    }
                 }
 
                 // Schemaにあわせた配列を作成する
