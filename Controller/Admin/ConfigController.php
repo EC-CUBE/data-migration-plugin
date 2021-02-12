@@ -395,6 +395,7 @@ class ConfigController extends AbstractController
                 $this->saveToP($em, $csvDir, 'dtb_product_image');
                 $this->saveToP($em, $csvDir, 'dtb_product_tag');
                 $this->saveToP($em, $csvDir, 'mtb_tag', 'dtb_tag');
+                $this->saveToP($em, $csvDir, 'dtb_customer_favorite_product');
 
             } else {
                 $this->saveToP($em, $csvDir, 'dtb_products', 'dtb_product');
@@ -404,6 +405,8 @@ class ConfigController extends AbstractController
                 $this->saveToP($em, $csvDir, 'dtb_product_categories', 'dtb_product_category');
                 $this->saveToP($em, $csvDir, 'dtb_product_status', 'dtb_product_tag');
                 $this->saveToP($em, $csvDir, 'mtb_status', 'dtb_tag');
+
+                $this->saveToP($em, $csvDir, 'dtb_customer_favorite_products', 'dtb_customer_favorite_product');
 
                 // 在庫
                 $this->saveStock($em);
@@ -517,6 +520,10 @@ class ConfigController extends AbstractController
                 foreach ($listTableColumns as $column) {
                     if ($column == 'id' && $tableName == 'dtb_product') {
                         $value[$column] = $data['product_id'];
+
+                    } elseif ($column == 'id' && $tableName == 'dtb_customer_favorite_product') {
+                        $value[$column] = $i;
+
                     } elseif ($column == 'product_status_id') {
                         // 退会が追加された
                         $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
@@ -656,6 +663,14 @@ class ConfigController extends AbstractController
                         } else {
                             $value['visible'] = !empty($data['del_flg']) ? 0 : 1;
                         }
+                        break;
+                    case 'dtb_customer_favorite_product':
+
+                        // 3系には del_flg がある
+                        if ($data['del_flg'] == 1) {
+                            unset($value);
+                        }
+
                         break;
                 }
 
