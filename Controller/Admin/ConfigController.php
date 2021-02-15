@@ -1129,6 +1129,9 @@ class ConfigController extends AbstractController
                 $this->setIdSeq($em, 'dtb_mail_history');
             }
 
+            // order_status のアンマッチ問題への対応
+            $em->exec('UPDATE dtb_order SET order_status_id = NULL WHERE order_status_id not in (select id from mtb_order_status)');
+
             $em->commit();
 
             $this->addSuccess('受注データを登録しました。', 'admin');
