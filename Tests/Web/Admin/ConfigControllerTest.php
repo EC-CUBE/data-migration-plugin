@@ -24,11 +24,12 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
     public function testファイルアップロードテスト()
     {
         $file = __DIR__.'/../../Fixtures/foo.zip';
+        $testFile = __DIR__.'/../../Fixtures/test.zip';
 
         $fs = new Filesystem();
-        $fs->copy($file, $file . '.backup');
+        $fs->copy($file, $testFile);
 
-        $file = new UploadedFile($file, 'foo.zip', 'application/zip', null, null, true);
+        $file = new UploadedFile($testFile, 'test.zip', 'application/zip', null, null, true);
         $this->client->request(
             'POST',
             $this->generateUrl('data_migration4_admin_config'),
@@ -42,8 +43,6 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
                 'import_file' => $file
             ]
         );
-
-        $fs->rename($file . '.backup', $file, true);
 
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
     }
