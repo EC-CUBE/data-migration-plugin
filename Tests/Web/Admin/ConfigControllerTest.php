@@ -46,8 +46,6 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
             ]
         );
 
-        var_dump($crawler->text());
-
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
     }
 }
