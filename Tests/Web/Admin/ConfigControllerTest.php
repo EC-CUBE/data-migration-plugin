@@ -23,8 +23,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
     public function testファイルアップロードテスト()
     {
-//        $project_dir = self::$container->getParameter('kernel.project_dir');
-        $project_dir = $this->container->getParameter('kernel.project_dir');
+        $project_dir = self::$container->getParameter('kernel.project_dir');
 
         $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/backup2_12.tar.gz';
         $testFile = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/test.tar.gz';
@@ -33,7 +32,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         $fs->copy($file, $testFile);
 
         $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, null, true);
-        $this->client->request(
+        $crawler = $this->client->request(
             'POST',
             $this->generateUrl('data_migration4_admin_config'),
             [
@@ -46,6 +45,8 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
                 'import_file' => $file
             ]
         );
+
+        var_dump($crawler->text());
 
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
     }
