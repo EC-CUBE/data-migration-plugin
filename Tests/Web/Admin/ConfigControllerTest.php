@@ -21,7 +21,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         parent::tearDown();
     }
 
-    public function testアップロードできるか()
+    public function testファイルアップロードテスト()
     {
         $file = __DIR__.'/../../Fixtures/foo.zip';
 
@@ -36,10 +36,10 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
                 'config' => [
                     Constant::TOKEN_NAME => 'dummy',
                     'import_file' => $file
-                ],
-                [
-                    'import_file' => $file
                 ]
+            ],
+            [
+                'import_file' => $file
             ]
         );
 
