@@ -23,8 +23,10 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
     public function testファイルアップロードテスト()
     {
-        $file = __DIR__.'/../../Fixtures/foo.zip';
-        $testFile = __DIR__.'/../../Fixtures/test.zip';
+        $project_dir = self::$container->getParameter('kernel.project_dir');
+
+        $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/foo.zip';
+        $testFile = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/test.zip';
 
         $fs = new Filesystem();
         $fs->copy($file, $testFile);
