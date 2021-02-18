@@ -24,7 +24,8 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
     public function testCsvUpload()
     {
-        $file = new UploadedFile(__DIR__ . '/../backup2_12.tar.gz', 'backup2_12.tar.gz');
+        $pluginDir = $this->container->getParameter('kernel.project_dir').'/app/Plugin';
+        $file = new UploadedFile($pluginDir . '/DataMigration4/Tests/backup2_12.tar.gz', 'backup2_12.tar.gz');
 
         $crawler = $this->client->request(
             'POST',
