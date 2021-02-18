@@ -34,4 +34,12 @@ class ConfigType extends AbstractType
             ])
             ;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBlockPrefix()
+    {
+        return 'data_migration_plugin_csv_import';
+    }
 }

@@ -25,19 +25,24 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
     public function testCsvUpload()
     {
         $pluginDir = $this->container->getParameter('kernel.project_dir').'/app/Plugin';
-        $file = new UploadedFile($pluginDir . '/DataMigration4/Tests/backup2_12.tar.gz', 'backup2_12.tar.gz');
+        $file = new UploadedFile($pluginDir . '/DataMigration4/Tests/backup2_12.tar.gz', 'backup2_12.tar.gz', 'application/x-tar', null, null, true);
 
         $crawler = $this->client->request(
             'POST',
             $this->generateUrl('data_migration4_admin_config'),
             [
-                'admin_csv_import' => [
+                'data_migration_plugin_csv_import' => [
                     '_token' => 'dummy',
                     'import_file' => $file,
                 ],
             ],
             ['import_file' => $file]
         );
+
+        //$this->assertRegexp(
+        //    '/会員データ登録しました。/u',
+        //    $crawler->filter('div.alert-success')->text()
+        //);
 
         $crawler = $this->client->request(
             'POST',
@@ -50,9 +55,5 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         $this->actual = $crawler->filter('div.c-outsideBlock__contents.mb-5 > span')->text();
         $this->verify();
 
-        //$this->assertRegexp(
-        //    '/CSVファイルをアップロードしました/u',
-        //    $crawler->filter('div.alert-primary')->text()
-        //);
     }
 }
