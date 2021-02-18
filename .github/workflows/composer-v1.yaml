@@ -124,18 +124,18 @@ jobs:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
 
-          #      - name: Update Plugin
-          #        run: |
-          #          cd ec-cube
-          #          bin/console eccube:plugin:update ${{ github.event.repository.name }}
-          #        env:
-          #          DATABASE_URL: ${{ matrix.database_url }}
-          #          DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
-          #
-          #      - name: Uninstall Plugin
-          #        run: |
-          #          cd ec-cube
-          #          bin/console eccube:plugin:uninstall --code=${{ github.event.repository.name }}
+      - name: Update Plugin
+        run: |
+            cd ec-cube
+            bin/console eccube:plugin:update ${PLUGIN_NAME}
         env:
-          DATABASE_URL: ${{ matrix.database_url }}
-          DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+            DATABASE_URL: ${{ matrix.database_url }}
+            DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
+
+      - name: Uninstall Plugin
+        run: |
+            cd ec-cube
+            bin/console eccube:plugin:uninstall --code=${PLUGIN_NAME}
+        env:
+            DATABASE_URL: ${{ matrix.database_url }}
+            DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
