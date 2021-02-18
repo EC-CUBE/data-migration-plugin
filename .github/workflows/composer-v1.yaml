@@ -79,9 +79,9 @@ jobs:
           cd ec-cube
           composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
           composer require --dev kiy0taka/eccube4-test-fixer
-          composer require pear/pear-core-minimal
-          composer require pear/archive_tar
-          composer require wapmorgan/unified-archive
+          composer require pear/pear-core-minimal:^1.10.0alpha2
+          composer require pear/archive_tar:^1.4.3
+          composer require wapmorgan/unified-archive:^0.0.3
           composer require nobuhiko/bulk-insert-query
 
       - name: Setup EC-CUBE
