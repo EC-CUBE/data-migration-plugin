@@ -1620,7 +1620,6 @@ class ConfigController extends AbstractController
         $platform = $em->getDatabasePlatform()->getName();
 
         if ($platform == 'mysql') {
-//            $em->exec('TRUNCATE TABLE '.$tableName);
             $em->exec('DELETE FROM '.$tableName);
         } else {
             $em->exec('DELETE FROM '.$tableName);
