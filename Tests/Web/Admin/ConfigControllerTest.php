@@ -40,9 +40,6 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
                     Constant::TOKEN_NAME => 'dummy',
                     'import_file' => $file
                 ]
-            ],
-            [
-                'import_file' => $file
             ]
         );
 
