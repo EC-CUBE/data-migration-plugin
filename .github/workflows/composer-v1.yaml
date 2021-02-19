@@ -59,16 +59,17 @@ jobs:
           tar cvzf $HOME/${PLUGIN_NAME}.tar.gz ./*
           git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
 
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
-      - uses: actions/cache@v2
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
+          #      - name: Get Composer Cache Directory
+          #        id: composer-cache
+          #        run: |
+          #          cd ec-cube
+          #          echo "::set-output name=dir::$(composer config cache-files-dir)"
+          #      - uses: actions/cache@v2
+          #        with:
+          #          path: ${{ steps.composer-cache.outputs.dir }}
+          #          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          #          restore-keys: |
+          #            ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
         run : |

@@ -1,0 +1,174 @@
+name: CI for Securitychecker3
+on:
+  push:
+    branches:
+      - '4.0'
+    tags:
+      - '*'
+    paths:
+      - '**'
+      - '!*.md'
+  pull_request:
+    branches:
+      - '4.0'
+    paths:
+      - '**'
+      - '!*.md'
+
+jobs:
+  run-on-linux:
+    name: Run on Linux
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      fail-fast: false
+      matrix:
+        operating-system: [ ubuntu-18.04 ]
+        php: [ 7.3 ]
+        db: [ mysql, pgsql ]
+        eccube_version: [ 4.0.5 ]
+        plugin_code: [ DataMigration4 ]
+        include:
+          - db: mysql
+            dbport: '3306'
+            dbuser: 'root'
+            dbpass: 'root'
+          - db: pgsql
+            dbport: '5432'
+            dbuser: 'postgres'
+            dbpass: 'password'
+    services:
+      postgres:
+        image: postgres:9.5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      mailcatcher:
+        image: schickling/mailcatcher
+        ports:
+          - 1080:1080
+          - 1025:1025
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Setup PHP
+      uses: nanasess/setup-php@master
+      with:
+        php-version: ${{ matrix.php }}
+
+    - name: Archive Plugin
+      env:
+        PLUGIN_CODE: ${{ matrix.plugin_code }}
+      run: |
+        tar cvzf ${GITHUB_WORKSPACE}/${PLUGIN_CODE}.tar.gz ./*
+
+    - name: Clone to EC-CUBE
+      env:
+        ECCUBE_VERSION: ${{ matrix.eccube_version }}
+      run:  |
+        git clone https://github.com/EC-CUBE/ec-cube.git ec-cube
+        cd ec-cube
+        git checkout -b ${ECCUBE_VERSION} refs/tags/${ECCUBE_VERSION}
+
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: |
+        echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+    - uses: actions/cache@v1
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-composer-
+
+    - name: Install to composer
+      run: |
+        cd ec-cube
+        composer global require --optimize-autoloader "hirak/prestissimo"
+        composer install --no-interaction -o
+
+    - name: Setup EC-CUBE
+      env:
+        DB: ${{ matrix.db }}
+        USER: ${{ matrix.dbuser }}
+        DBUSER: ${{ matrix.dbuser }}
+        DBPASS: ${{ matrix.dbpass }}
+        DBNAME: myapp_test
+        DBPORT: ${{ matrix.dbport }}
+        DBSERVER: 127.0.0.1
+        ROOT_URLPATH: /ec-cube/html
+      run: |
+        cd ec-cube
+        export PGPASSWORD=${DBPASS}
+        php ./eccube_install.php ${DB}
+    - name: Setup Plugin
+      env:
+        PLUGIN_CODE: ${{ matrix.plugin_code }}
+      run: |
+        cd ec-cube
+        bin/console eccube:plugin:install --code=${PLUGIN_CODE} --path=${GITHUB_WORKSPACE}/${PLUGIN_CODE}.tar.gz
+        bin/console eccube:plugin:enable --code=${PLUGIN_CODE}
+
+     - name: Run PHPUnit
+       env:
+         PLUGIN_CODE: ${{ matrix.plugin_code }}
+       run: |
+         cd ec-cube
+         vendor/bin/phpunit -c app/Plugin/${PLUGIN_CODE}/phpunit.xml.dist app/Plugin/${PLUGIN_CODE}/Tests
+
+    - name: setup-chromedriver
+      uses: nanasess/setup-chromedriver@master
+    - name: Run chromedriver
+      run: |
+        export DISPLAY=:99
+        chromedriver --url-base=/wd/hub &
+        echo ">>> Started chrome-driver"
+        sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+        echo ">>> Started xvfb"
+    - name: Setup php-fpm
+      env:
+        PHP_VERSION: ${{ matrix.php }}
+      run: |
+        sudo apt-fast -y install php${PHP_VERSION}-fpm
+        sudo systemctl enable php${PHP_VERSION}-fpm
+
+    - name: Setup Apache
+      env:
+        PHP_VERSION: ${{ matrix.php }}
+      run: |
+        sudo apt-fast -y install apache2
+        sudo a2enmod rewrite actions proxy_fcgi alias ssl
+        sudo a2enconf php${PHP_VERSION}-fpm
+        sed -i -e "s,%GITHUB_WORKSPACE%,${GITHUB_WORKSPACE},g" build/*.conf
+        sed -i -e "s,%PHP_VERSION%,${PHP_VERSION},g" build/*.conf
+        sudo cp -p build/*.conf /etc/apache2/sites-available
+        sudo a2ensite default-ssl
+        sudo chmod -R o+w ec-cube
+        sudo systemctl restart php${PHP_VERSION}-fpm apache2
+
+    # - name: Run Codeception
+    #   env:
+    #     PLUGIN_CODE: ${{ matrix.plugin_code }}
+    #   run: |
+    #     cd ec-cube
+    #     vendor/bin/codecept -c app/Plugin/${PLUGIN_CODE}/codeception.yml -vvv run acceptance --env travis --steps
+
+    - name: Disable Plugin
+      env:
+        PLUGIN_CODE: ${{ matrix.plugin_code }}
+      run: |
+        cd ec-cube
+        bin/console eccube:plugin:disable --code=${PLUGIN_CODE}
+
+    - name: Uninstall Plugin
+      env:
+        PLUGIN_CODE: ${{ matrix.plugin_code }}
+      run: |
+        cd ec-cube
+        bin/console eccube:plugin:uninstall --code=${PLUGIN_CODE}
