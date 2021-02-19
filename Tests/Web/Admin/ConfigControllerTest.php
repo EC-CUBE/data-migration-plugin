@@ -32,7 +32,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         $fs->copy($file, $testFile);
 
         $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, null, true);
-        $crawler = $this->client->request(
+        $this->client->request(
             'POST',
             $this->generateUrl('data_migration4_admin_config'),
             [
