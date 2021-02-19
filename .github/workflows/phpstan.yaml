@@ -1,6 +1,7 @@
 name: PHPStan
 on: [workflow_dispatch, pull_request]
 env:
+  PLUGIN_NAME: DataMigration4
   DATABASE_URL: mysql://root:root@127.0.0.1:3306/eccube_db
   DATABASE_SERVER_VERSION: 5
 
@@ -38,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tar cvzf $HOME/${{ github.event.repository.name }}.tar.gz ./*
+          tar cvzf $HOME/${PLUGIN_NAME}.tar.gz ./*
           git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b 4.1 --depth=1
 
       - name: Get composer cache directory
@@ -72,12 +73,12 @@ jobs:
       - name: Install Plugin
         run: |
           cd ec-cube
-          bin/console eccube:plugin:install --path=$HOME/${{ github.event.repository.name }}.tar.gz
+          bin/console eccube:plugin:install --path=$HOME/${PLUGIN_NAME}.tar.gz
           bin/console cache:clear --no-warmup
-          bin/console eccube:plugin:enable --code=${{ github.event.repository.name }}
+          bin/console eccube:plugin:enable --code=${PLUGIN_NAME}
 
       - name: PHPStan
         run: |
           cd ec-cube
           composer require phpstan/phpstan --dev
-          vendor/bin/phpstan analyze -l 0 app/Plugin/${{ github.event.repository.name }} --error-format=github
+          vendor/bin/phpstan analyze -l 0 app/Plugin/${PLUGIN_NAME} --error-format=github
