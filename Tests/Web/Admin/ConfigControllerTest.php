@@ -26,8 +26,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
     public function testv2_12のバックアップファイルをアップロードできるかテスト()
     {
-//        $project_dir = self::$container->getParameter('kernel.project_dir');
-        $project_dir = $this->container->getParameter('kernel.project_dir');
+        $project_dir = self::$container->getParameter('kernel.project_dir');
 
         $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/backup2_12.tar.gz';
         $testFile = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/test.tar.gz';
