@@ -47,17 +47,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
 
-        #- name: Get Composer Cache Directory
-        #- id: composer-cache
-        #- run: |
-        #-   echo "::set-output name=dir::$(composer config cache-files-dir)"
-        #- - uses: actions/cache@v1
-        #- with:
-        #-   path: ${{ steps.composer-cache.outputs.dir }}
-        #-   key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-        #-   restore-keys: |
-        #-     ${{ runner.os }}-composer-
-
       - name: Setup PHP
         uses: nanasess/setup-php@master
         with:
@@ -69,6 +58,17 @@ jobs:
         run: |
           tar cvzf $HOME/${PLUGIN_NAME}.tar.gz ./*
           git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: |
+          echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - uses: actions/cache@v2
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
         run : |
@@ -103,7 +103,7 @@ jobs:
       - name: Run Tests for EC-CUBE4.0
         run: |
           cd ec-cube
-          bin/phpunit -c app/Plugin/{$PLUGIN_NAME}/phpunit.xml.dist app/Plugin/{$PLUGIN_NAME}/Tests/
+          bin/phpunit -c app/Plugin/${PLUGIN_NAME}/phpunit.xml.dist app/Plugin/${PLUGIN_NAME}/Tests/
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
