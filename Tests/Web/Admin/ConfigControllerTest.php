@@ -11,6 +11,7 @@ use Eccube\Entity\Product;
 use Eccube\Tests\Web\Admin\AbstractAdminWebTestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 
 class ConfigControllerTest extends AbstractAdminWebTestCase
 {
@@ -36,7 +37,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
         $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, null, true);
 
-        $this->client->request(
+        $crawler = $this->client->request(
             'POST',
             $this->generateUrl('data_migration4_admin_config'),
             [
@@ -47,6 +48,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
             ]
         );
 
+        self::assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode(), $crawler->filter('.form-error-message')->text());
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
 
         $customers = $this->entityManager->getRepository(Customer::class)->findAll();
