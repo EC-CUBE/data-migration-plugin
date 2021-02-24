@@ -692,6 +692,7 @@ class ConfigController extends AbstractController
                         // 3系には del_flg がある
                         if ($data['del_flg'] == 1) {
                             unset($value);
+                            continue 2;
                         }
 
                         break;
