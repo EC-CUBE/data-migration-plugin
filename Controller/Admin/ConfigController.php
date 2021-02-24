@@ -5,7 +5,6 @@ namespace Plugin\DataMigration4\Controller\Admin;
 use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
-use Eccube\Doctrine\DBAL\Types\UTCDateTimeTzType;
 use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
 use nobuhiko\BulkInsertQuery\BulkInsertQuery;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -1223,7 +1222,7 @@ class ConfigController extends AbstractController
                             $value[$column] = 3;
                         }
                     } elseif ($column == 'message' || $column == 'note') {
-                        $value[$column] = mb_substr($data[$column], 0, 4000);
+                        $value[$column] = empty($data[$column]) ? null : mb_substr($data[$column], 0, 4000);
                     } elseif ($column == 'postal_code') {
                         $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
                         if (empty($value[$column])) {
@@ -1621,7 +1620,7 @@ class ConfigController extends AbstractController
         $platform = $em->getDatabasePlatform()->getName();
 
         if ($platform == 'mysql') {
-            $em->exec('TRUNCATE TABLE '.$tableName);
+            $em->exec('DELETE FROM '.$tableName);
         } else {
             $em->exec('DELETE FROM '.$tableName);
         }
