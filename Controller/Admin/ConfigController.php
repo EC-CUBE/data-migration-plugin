@@ -280,13 +280,14 @@ class ConfigController extends AbstractController
             $key = array_filter(array_map('trim', $key));
 
             $keySize = count($key);
-
             $columns = $em->getSchemaManager()->listTableColumns($tableName);
+
+            $listTableColumns = [];
             foreach ($columns as $column) {
                 $listTableColumns[] = $column->getName();
             }
 
-            $builder = new BulkInsertQuery($em, $tableName, 20);
+            $builder = new BulkInsertQuery($em, $tableName);
             $builder->setColumns($listTableColumns);
 
             $batchSize = 20;
@@ -502,11 +503,12 @@ class ConfigController extends AbstractController
             $keySize = count($key);
 
             $columns = $em->getSchemaManager()->listTableColumns($tableName);
+            $listTableColumns = [];
             foreach ($columns as $column) {
                 $listTableColumns[] = $column->getName();
             }
 
-            $builder = new BulkInsertQuery($em, $tableName, 20);
+            $builder = new BulkInsertQuery($em, $tableName);
             $builder->setColumns($listTableColumns);
 
             $batchSize = 20;
@@ -746,6 +748,7 @@ class ConfigController extends AbstractController
             $keySize = count($key);
 
             $i = 1;
+            $add_value = [];
             while (($row = fgetcsv($handle)) !== false) {
                 // 1行目をkeyとした配列を作る
                 $data = $this->convertNULL(array_combine($key, $row));
@@ -856,7 +859,7 @@ class ConfigController extends AbstractController
                 ');
             }
 
-            $builder = new BulkInsertQuery($em, 'dtb_class_combination', 20);
+            $builder = new BulkInsertQuery($em, 'dtb_class_combination');
             $builder->setColumns(['class_combination_id', 'parent_class_combination_id', 'classcategory_id', 'level']);
 
             $i = 1;
@@ -918,11 +921,13 @@ class ConfigController extends AbstractController
     {
         $tableName = 'dtb_product_stock';
         $columns = $em->getSchemaManager()->listTableColumns($tableName);
+
+        $listTableColumns = [];
         foreach ($columns as $column) {
             $listTableColumns[] = $column->getName();
         }
 
-        $builder = new BulkInsertQuery($em, $tableName, 20);
+        $builder = new BulkInsertQuery($em, $tableName);
         $builder->setColumns($listTableColumns);
 
         $em->exec('DELETE FROM '.$tableName);
@@ -955,11 +960,13 @@ class ConfigController extends AbstractController
     {
         $tableName = 'dtb_product_image';
         $columns = $em->getSchemaManager()->listTableColumns($tableName);
+
+        $listTableColumns = [];
         foreach ($columns as $column) {
             $listTableColumns[] = $column->getName();
         }
 
-        $builder = new BulkInsertQuery($em, $tableName, 20);
+        $builder = new BulkInsertQuery($em, $tableName);
         $builder->setColumns($listTableColumns);
 
         $em->exec('DELETE FROM '.$tableName);
@@ -1182,11 +1189,12 @@ class ConfigController extends AbstractController
             $keySize = count($key);
 
             $columns = $em->getSchemaManager()->listTableColumns($tableName);
+            $listTableColumns = [];
             foreach ($columns as $column) {
                 $listTableColumns[] = $column->getName();
             }
 
-            $builder = new BulkInsertQuery($em, $tableName, 20);
+            $builder = new BulkInsertQuery($em, $tableName);
             $builder->setColumns($listTableColumns);
 
             $batchSize = 20;
@@ -1529,6 +1537,8 @@ class ConfigController extends AbstractController
     {
         $tableName = 'dtb_order_item';
         $columns = $em->getSchemaManager()->listTableColumns($tableName);
+
+        $listTableColumns = [];
         foreach ($columns as $column) {
             $listTableColumns[] = $column->getName();
 
@@ -1539,7 +1549,7 @@ class ConfigController extends AbstractController
             }
         }
 
-        $builder = new BulkInsertQuery($em, $tableName, 20);
+        $builder = new BulkInsertQuery($em, $tableName);
         $builder->setColumns($listTableColumns);
 
         $i = $em->fetchColumn('SELECT max(id) + 1  FROM '.$tableName);

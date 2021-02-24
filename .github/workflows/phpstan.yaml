@@ -81,4 +81,4 @@ jobs:
         run: |
           cd ec-cube
           composer require phpstan/phpstan --dev
-          vendor/bin/phpstan analyze -l 0 app/Plugin/${PLUGIN_NAME} --error-format=github
+          vendor/bin/phpstan analyze -l 1 app/Plugin/${PLUGIN_NAME} --error-format=github
