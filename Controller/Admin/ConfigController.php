@@ -418,11 +418,8 @@ class ConfigController extends AbstractController
                 $this->saveToP($em, $csvDir, 'dtb_product_image');
                 $this->saveToP($em, $csvDir, 'dtb_product_tag');
                 $this->saveToP($em, $csvDir, 'mtb_tag', 'dtb_tag');
-<<<<<<< HEAD
                 $this->saveToP($em, $csvDir, 'dtb_customer_favorite_product');
 
-=======
->>>>>>> origin
             } else {
                 $this->saveToP($em, $csvDir, 'dtb_products', 'dtb_product');
                 $this->saveToP($em, $csvDir, 'dtb_products_class', 'dtb_product_class');
