@@ -17,6 +17,8 @@ use wapmorgan\UnifiedArchive\UnifiedArchive;
 
 class ConfigController extends AbstractController
 {
+    protected $em;
+
     /** @var pluginService */
     protected $pluginService;
 
@@ -25,6 +27,39 @@ class ConfigController extends AbstractController
 
     /** @var array */
     protected $delivery_time = [];
+
+    /** @var array */
+    protected $delivery_id = [];
+
+    /** @var array */
+    protected $stock = [];
+
+    /** @var array */
+    protected $shipping_id = [];
+
+    /** @var array */
+    protected $product_class_id = [];
+
+    /** @var array */
+    protected $order_item = [];
+
+    /** @var array */
+    protected $product_image = [];
+
+    /** @var array */
+    protected $baseinfo = [];
+
+    /** @var array */
+    protected $shipping_order = [];
+
+    /** @var array */
+    protected $dtb_class_combination = [];
+
+    /** @var bool */
+    protected $flag_244 = false;
+
+    /** @var bool */
+    protected $flag_3 = false;
 
     /**
      * constructor.
@@ -1682,7 +1717,7 @@ class ConfigController extends AbstractController
      *
      * @param mixed $data
      * @access private
-     * @return void
+     * @return array
      */
     private function convertNULL($data)
     {
