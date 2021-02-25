@@ -88,16 +88,16 @@ class ConfigController extends AbstractController
             $formFile->move($tmpDir, $tmpFile);
 
             $archive = UnifiedArchive::open($tmpDir.'/'.$tmpFile);
-            // 解凍
-            $archive->extractNode($tmpDir);
             $fileNames = $archive->getFileNames();
+            // 解凍
+            $archive->extractFiles($tmpDir, $fileNames);
 
             $this->flag_244 = false;
             //
             $this->em = $em;
 
             // 2.4.4系の場合の処理
-            if ($archive->getFileData($fileNames[0].'bkup_data.csv')) {
+            if ($archive->isFileExists($fileNames[0].'bkup_data.csv')) {
                 $csvDir = $tmpDir.'/'.$fileNames[0];
                 $this->cutOff24($csvDir, 'bkup_data.csv');
 
