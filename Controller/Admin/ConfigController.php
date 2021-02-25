@@ -1464,7 +1464,7 @@ class ConfigController extends AbstractController
                         $value['tax_rule_id'] = null;
 
                         // 2.4.4, 2.11, 2.12
-                        if (isset($this->baseinfo)) {
+                        if (isset($this->baseinfo) && !empty($this->baseinfo)) {
                             $value['tax_rate'] = $data['tax_rate'] = $this->baseinfo['tax'];
                             $data['point_rate'] = $this->baseinfo['point_rate'];
                         }
