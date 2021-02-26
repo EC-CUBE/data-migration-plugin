@@ -25,47 +25,25 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         parent::tearDown();
     }
 
-    public function testv2_12のバックアップファイルをアップロードできるかテスト()
+    public function versionProvider()
     {
-        $project_dir = self::$container->getParameter('kernel.project_dir');
-
-        $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/backup2_12.tar.gz';
-        $testFile = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/test.tar.gz';
-
-        $fs = new Filesystem();
-        $fs->copy($file, $testFile);
-
-        $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, null, true);
-
-        $this->client->request(
-            'POST',
-            $this->generateUrl('data_migration4_admin_config'),
-            [
-                'config' => [
-                    Constant::TOKEN_NAME => 'dummy',
-                    'import_file' => $file
-                ]
-            ]
-        );
-
-        self::assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
-        self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
-
-        $customers = $this->entityManager->getRepository(Customer::class)->findAll();
-        self::assertEquals(1, count($customers));
-
-        $products = $this->entityManager->getRepository(Product::class)->findAll();
-        self::assertEquals(3, count($products));
-
-        $orders = $this->entityManager->getRepository(Order::class)->findAll();
-        self::assertEquals(2, count($orders));
+        return [
+            //['2_11_5', 1, 3, 3],
+            ['2_12_6', 1, 3, 2],
+            ['2_13_5', 1, 3, 2],
+            ['3_0_9', 1, 2, 6],
+            ['3_0_18', 1, 2, 4],
+        ];
     }
 
-    public function testv3のバックアップファイルをアップロードできるかテスト()
+    /**
+     * @dataProvider versionProvider
+     */
+    public function testバックアップファイルをアップロードできるかテスト($v, $c, $p, $o)
     {
         $project_dir = self::$container->getParameter('kernel.project_dir');
 
-        $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/backup3.tar.gz';
+        $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/'.$v.'.tar.gz';
         $testFile = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/test.tar.gz';
 
         $fs = new Filesystem();
@@ -84,17 +62,21 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
             ]
         );
 
+        //var_dump($this->client->getResponse()->getStatusCode());
+        //var_dump($this->client->getResponse()->getContent());
+        //die();
+
         self::assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
 
         $customers = $this->entityManager->getRepository(Customer::class)->findAll();
-        self::assertEquals(1, count($customers));
+        self::assertEquals($c, count($customers));
 
         $products = $this->entityManager->getRepository(Product::class)->findAll();
-        self::assertEquals(2, count($products));
+        self::assertEquals($p, count($products));
 
         $orders = $this->entityManager->getRepository(Order::class)->findAll();
-        self::assertEquals(1, count($orders));
+        self::assertEquals($o, count($orders));
     }
 
 }

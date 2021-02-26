@@ -96,9 +96,19 @@ class ConfigController extends AbstractController
             //
             $this->em = $em;
 
+            // 圧縮方式の間違いに対応する
+            $path = pathinfo($fileNames[0]);
+
+            if ($path != '.') {
+                $csvDir = $tmpDir.'/'.$path['dirname'].'/';
+            } else {
+                $csvDir = $tmpDir.'/';
+            }
+
             // 2.4.4系の場合の処理
-            if ($archive->isFileExists($fileNames[0].'bkup_data.csv')) {
-                $csvDir = $tmpDir.'/'.$fileNames[0];
+            if ($archive->isFileExists($path['dirname'].'/bkup_data.csv')) {
+
+                //$csvDir = $tmpDir.'/'.$fileNames[0];
                 $this->cutOff24($csvDir, 'bkup_data.csv');
 
                 // 2.4.4系の場合の処理
@@ -110,15 +120,6 @@ class ConfigController extends AbstractController
                         $this->fix24Shipping($em, $csvDir);
                         $this->fix24ProductsClass($em, $csvDir);
                     }
-                }
-            } else {
-                // 圧縮方式の間違いに対応する
-                $path = pathinfo($fileNames[0]);
-
-                if ($path != '.') {
-                    $csvDir = $tmpDir.'/'.$path['dirname'].'/';
-                } else {
-                    $csvDir = $tmpDir.'/';
                 }
             }
 
@@ -1061,6 +1062,7 @@ class ConfigController extends AbstractController
 
                             $fpcsv = fopen($tmpDir.$tableName.'.csv', 'w');
                             break;
+
                         case 'dtb_other_deliv':
                             //$tableName = 'dtb_customer_address';
                             $tableName = $row[0];
