@@ -28,7 +28,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
     public function versionProvider()
     {
         return [
-            //['2_11_5', 1, 3, 3],
+            ['2_11_5', 1, 0, 3],
             ['2_12_6', 1, 3, 2],
             ['2_13_5', 1, 3, 2],
             ['3_0_9', 1, 2, 6],
@@ -51,20 +51,28 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
         $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, null, true);
 
-        $this->client->request(
-            'POST',
-            $this->generateUrl('data_migration4_admin_config'),
+        $post =
             [
                 'config' => [
                     Constant::TOKEN_NAME => 'dummy',
-                    'import_file' => $file
+                    'import_file' => $file,
                 ]
             ]
+            ;
+
+        // 2.11系のmysqlにはcreate tableが使われているので、商品を除外してテストする
+        if ($v == '2_11_5') {
+            $post['config']['customer_order_only'] = 1;
+        }
+
+        $this->client->request(
+            'POST',
+            $this->generateUrl('data_migration4_admin_config'),
+            $post
         );
 
         //var_dump($this->client->getResponse()->getStatusCode());
         //var_dump($this->client->getResponse()->getContent());
-        //die();
 
         self::assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
         self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
@@ -72,8 +80,10 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         $customers = $this->entityManager->getRepository(Customer::class)->findAll();
         self::assertEquals($c, count($customers));
 
-        $products = $this->entityManager->getRepository(Product::class)->findAll();
-        self::assertEquals($p, count($products));
+        if ($p > 0) {
+            $products = $this->entityManager->getRepository(Product::class)->findAll();
+            self::assertEquals($p, count($products));
+        }
 
         $orders = $this->entityManager->getRepository(Order::class)->findAll();
         self::assertEquals($o, count($orders));
