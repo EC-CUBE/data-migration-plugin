@@ -79,7 +79,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          path: app/Plugin/$PLUGIN_NAME
+          path: app/Plugin/DataMigration4
 
       - name: show plugin path
         run: ls app/Plugin
