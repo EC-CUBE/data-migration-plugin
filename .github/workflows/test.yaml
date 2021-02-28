@@ -81,7 +81,7 @@ jobs:
         with:
           path: app/Plugin/${PLUGIN_NAME}
 
-      -name: check path
+      - name: check path
         run: ls app/Plugin
 
       - name: Setup EC-CUBE and Plugin
