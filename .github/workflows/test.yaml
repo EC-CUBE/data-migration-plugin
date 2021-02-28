@@ -81,6 +81,11 @@ jobs:
         with:
           path: app/Plugin/${PLUGIN_NAME}
 
+      -name: check path
+        run: |
+          cd app/Pluguin
+          ls -la
+
       - name: Setup EC-CUBE and Plugin
         run: |
           composer compile
