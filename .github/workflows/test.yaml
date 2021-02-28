@@ -79,14 +79,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          path: app/Plugin/${{ PLUGIN_NAME }}
+          path: app/Plugin/$PLUGIN_NAME
 
       - name: Setup EC-CUBE and Plugin
         run: |
           composer compile
-          bin/console eccube:plugin:install --code ${{ PLUGIN_NAME }}
+          bin/console eccube:plugin:install --code $PLUGIN_NAME
           bin/console cache:clear --no-warmup
-          bin/console eccube:plugin:enable --code ${{ PLUGIN_NAME }}
+          bin/console eccube:plugin:enable --code $PLUGIN_NAME
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
@@ -94,7 +94,7 @@ jobs:
       - name: Run Tests for EC-CUBE4.0
         if: matrix.eccube-versions == '4.0'
         run: |
-          find app/Plugin/${{ PLUGIN_NAME }}/Tests -name "*Test.php" | while read TESTCASE
+          find app/Plugin/$PLUGIN_NAME/Tests -name "*Test.php" | while read TESTCASE
           do
             bin/phpunit --include-path vendor/kiy0taka/eccube4-test-fixer/src --loader 'Eccube\PHPUnit\Loader\Eccube4CompatTestSuiteLoader' ${TESTCASE}
           done
@@ -105,7 +105,7 @@ jobs:
       - name: Run Tests
         if: matrix.eccube-versions != '4.0'
         run: |
-          bin/phpunit app/Plugin/${{ PLUGIN_NAME }}/Tests
+          bin/phpunit app/Plugin/$PLUGIN_NAME/Tests
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
