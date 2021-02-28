@@ -81,9 +81,6 @@ jobs:
         with:
           path: app/Plugin/DataMigration4
 
-      - name: show plugin path
-        run: ls app/Plugin
-
       - name: Setup EC-CUBE and Plugin
         run: |
           composer compile
