@@ -61,7 +61,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
             ;
 
         // 2.11系のmysqlにはcreate tableが使われているので、商品を除外してテストする
-        if ($v == '2_11_5' && $this->entityManager->getConnection()->getDatabasePlatform() === 'mysql') {
+        if ($v == '2_11_5' && $this->entityManager->getConnection()->getDatabasePlatform()->getName() === 'mysql') {
             $post['config']['customer_order_only'] = 1;
         }
 
