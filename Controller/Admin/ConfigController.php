@@ -96,9 +96,19 @@ class ConfigController extends AbstractController
             //
             $this->em = $em;
 
+            // 圧縮方式の間違いに対応する
+            $path = pathinfo($fileNames[0]);
+
+            if ($path != '.') {
+                $csvDir = $tmpDir.'/'.$path['dirname'].'/';
+            } else {
+                $csvDir = $tmpDir.'/';
+            }
+
             // 2.4.4系の場合の処理
-            if ($archive->isFileExists($fileNames[0].'bkup_data.csv')) {
-                $csvDir = $tmpDir.'/'.$fileNames[0];
+            if ($archive->isFileExists($path['dirname'].'/bkup_data.csv')) {
+
+                //$csvDir = $tmpDir.'/'.$fileNames[0];
                 $this->cutOff24($csvDir, 'bkup_data.csv');
 
                 // 2.4.4系の場合の処理
@@ -110,15 +120,6 @@ class ConfigController extends AbstractController
                         $this->fix24Shipping($em, $csvDir);
                         $this->fix24ProductsClass($em, $csvDir);
                     }
-                }
-            } else {
-                // 圧縮方式の間違いに対応する
-                $path = pathinfo($fileNames[0]);
-
-                if ($path != '.') {
-                    $csvDir = $tmpDir.'/'.$path['dirname'].'/';
-                } else {
-                    $csvDir = $tmpDir.'/';
                 }
             }
 
@@ -1061,6 +1062,7 @@ class ConfigController extends AbstractController
 
                             $fpcsv = fopen($tmpDir.$tableName.'.csv', 'w');
                             break;
+
                         case 'dtb_other_deliv':
                             //$tableName = 'dtb_customer_address';
                             $tableName = $row[0];
@@ -1124,6 +1126,7 @@ class ConfigController extends AbstractController
             }
 
             // todo mtb_order_status.display_order_count
+            $this->saveToO($em, $csvDir, 'mtb_device_type', null, true);
 
             if ($this->flag_3) {
                 $this->saveToO($em, $csvDir, 'dtb_delivery_time');
@@ -1158,6 +1161,7 @@ class ConfigController extends AbstractController
             // 支払いは基本移行しない
             $em->exec('DELETE FROM dtb_payment_option');
 
+
             if ($platform == 'mysql') {
                 $em->exec('SET FOREIGN_KEY_CHECKS = 1;');
             } else {
@@ -1172,7 +1176,7 @@ class ConfigController extends AbstractController
                 $this->setIdSeq($em, 'dtb_mail_history');
             }
 
-            // order_status のアンマッチ問題への対応
+            // イレギュラー対応
             $em->exec('UPDATE dtb_order SET order_status_id = NULL WHERE order_status_id not in (select id from mtb_order_status)');
 
             $em->commit();
