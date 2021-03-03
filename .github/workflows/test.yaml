@@ -1,5 +1,5 @@
 # @see https://github.com/kurozumi
-name: CI/CD for EC-CUBE4 Plugin with Composer:v1
+name: CI/CD for EC-CUBE4 Plugin
 on: [workflow_dispatch, pull_request]
 env:
   PLUGIN_NAME: DataMigration4
@@ -44,8 +44,11 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@master
+      - name: Checkout EC-CUBE
+        uses: actions/checkout@v2
+        with:
+          repository: EC-CUBE/ec-cube
+          ref: ${{ matrix.eccube-versions }}
 
       - name: Setup PHP, with composer and extensions
         uses: shivammathur/setup-php@master #https://github.com/shivammathur/setup-php
@@ -54,12 +57,6 @@ jobs:
           extensions: mbstring, xml, ctype, iconv, mysql, intl, zip, pgsql
           tools: composer:v1
 
-      - name: Clone EC-CUBE
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tar cvzf $HOME/${PLUGIN_NAME}.tar.gz ./*
-          git clone  https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/EC-CUBE/ec-cube.git -b ${{ matrix.eccube-versions }} --depth=1
       - name: Get composer cache directory
         id: composer-cache
         run: echo "::set-output name=dir::$(composer config cache-files-dir)"
@@ -75,25 +72,21 @@ jobs:
 
       - name: Install Composer dependencies
         run : |
-          cd ec-cube
           composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
           composer require --dev kiy0taka/eccube4-test-fixer
           composer require pear/pear-core-minimal:^1.10.10 pear/archive_tar:^1.4.13 wapmorgan/unified-archive:^1.1.1 nobuhiko/bulk-insert-query
-      - name: Setup EC-CUBE
-        run: |
-          cd ec-cube
-          bin/console doctrine:schema:create
-          bin/console eccube:fixtures:load
-        env:
-          DATABASE_URL: ${{ matrix.database_url }}
-          DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
 
-      - name: Install Plugin
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: app/Plugin/DataMigration4
+
+      - name: Setup EC-CUBE and Plugin
         run: |
-          cd ec-cube
-          bin/console eccube:plugin:install --path=$HOME/${PLUGIN_NAME}.tar.gz
+          composer compile
+          bin/console eccube:plugin:install --code $PLUGIN_NAME
           bin/console cache:clear --no-warmup
-          bin/console eccube:plugin:enable --code=${PLUGIN_NAME}
+          bin/console eccube:plugin:enable --code $PLUGIN_NAME
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
@@ -101,8 +94,7 @@ jobs:
       - name: Run Tests for EC-CUBE4.0
         if: matrix.eccube-versions == '4.0'
         run: |
-          cd ec-cube
-          find app/Plugin/DataMigration4/Tests -name "*Test.php" | while read TESTCASE
+          find app/Plugin/$PLUGIN_NAME/Tests -name "*Test.php" | while read TESTCASE
           do
             bin/phpunit --include-path vendor/kiy0taka/eccube4-test-fixer/src --loader 'Eccube\PHPUnit\Loader\Eccube4CompatTestSuiteLoader' ${TESTCASE}
           done
@@ -113,8 +105,7 @@ jobs:
       - name: Run Tests
         if: matrix.eccube-versions != '4.0'
         run: |
-          cd ec-cube
-          bin/phpunit app/Plugin/${PLUGIN_NAME}/Tests
+          bin/phpunit app/Plugin/$PLUGIN_NAME/Tests
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
