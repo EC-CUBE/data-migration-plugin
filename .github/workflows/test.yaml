@@ -55,7 +55,10 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: mbstring, xml, ctype, iconv, mysql, intl, zip, pgsql
-          tools: composer:v1
+          tools: composer:v2
+
+      - if: matrix.eccube-versions == '4.0'
+        run: sudo composer selfupdate --1
 
       - name: Get composer cache directory
         id: composer-cache
@@ -73,8 +76,12 @@ jobs:
       - name: Install Composer dependencies
         run : |
           composer install --no-progress --no-suggest --prefer-dist --optimize-autoloader
-          composer require --dev kiy0taka/eccube4-test-fixer
           composer require pear/pear-core-minimal:^1.10.10 pear/archive_tar:^1.4.13 wapmorgan/unified-archive:^1.1.1 nobuhiko/bulk-insert-query
+
+      - name: Install Composer eccube4-test-fixer
+        if: matrix.eccube-versions == '4.0'
+        run : |
+          composer require --dev kiy0taka/eccube4-test-fixer
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -102,7 +109,7 @@ jobs:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
 
-      - name: Run Tests
+      - name: Run Tests for EC-CUBE4.1
         if: matrix.eccube-versions != '4.0'
         run: |
           bin/phpunit app/Plugin/$PLUGIN_NAME/Tests
