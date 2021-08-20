@@ -1550,6 +1550,10 @@ class ConfigController extends AbstractController
                         $value['mail_body'] = $data['mail_body'];
 
                         break;
+
+                    case 'dtb_payment':
+                        $value['method_class'] = 'Eccube\Service\Payment\Method\Cash';
+                        break;
                 }
 
                 $builder->setValues($value);
