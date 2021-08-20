@@ -284,7 +284,13 @@ class ConfigController extends AbstractController
 
             $listTableColumns = [];
             foreach ($columns as $column) {
-                $listTableColumns[] = $column->getName();
+                $columnName = $column->getName();
+                if ($tableName === 'dtb_member') {
+                    if ($columnName === 'two_factor_auth_key' || $columnName === 'two_factor_auth_enabled') {
+                        continue;
+                    }
+                }
+                $listTableColumns[] = $columnName;
             }
 
             $builder = new BulkInsertQuery($em, $tableName);
