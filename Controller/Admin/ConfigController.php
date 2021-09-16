@@ -1320,7 +1320,7 @@ class ConfigController extends AbstractController
                     } elseif ($column == 'delivery_time') {
                         if (isset($data['deliv_time'])) {
                             $value[$column] = $data['deliv_time'];
-                        } elseif (isset($data['delivery_time'])) {
+                        } elseif (isset($data['delivery_time']) && strlen($data['delivery_time']) > 0) {
                             $value[$column] = $data['delivery_time'];
                         } else {
                             $value[$column] = null;
@@ -1424,6 +1424,11 @@ class ConfigController extends AbstractController
                         $this->shipping_id[$data['order_id']][$data['shipping_id']] = $i;
 
                         if ($this->flag_3) {
+                            if (isset($data['delivery_id']) & strlen($data['delivery_id']) > 0) {
+                                $value['delivery_id'] = $data['delivery_id'];
+                            } else {
+                                $value['delivery_id'] = null;
+                            }
                             if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
                                 $value['time_id'] = $this->delivery_time[$data['delivery_id']][$data['time_id']];
                             }
