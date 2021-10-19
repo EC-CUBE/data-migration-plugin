@@ -1134,9 +1134,12 @@ class ConfigController extends AbstractController
                 $em->exec('SET session_replication_role = replica;'); // need super user
             }
 
+            // 2.4には存在しないデータ
+            if (!$this->flag_244) {
+                $this->saveToO($em, $csvDir, 'mtb_device_type', null, true);
+            }
             // todo mtb_order_status.display_order_count
-            $this->saveToO($em, $csvDir, 'mtb_device_type', null, true);
-
+            //
             if ($this->flag_3) {
                 $this->saveToO($em, $csvDir, 'dtb_delivery_time');
                 $this->saveToO($em, $csvDir, 'dtb_delivery');
