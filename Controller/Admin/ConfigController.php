@@ -42,7 +42,7 @@ class ConfigController extends AbstractController
     /** @var array */
     protected $order_item = [];
     /** @var array */
-    protected $product_image = [];
+    protected $product_images = [];
     /** @var array */
     protected $baseinfo = [];
     /** @var array */
@@ -72,7 +72,7 @@ class ConfigController extends AbstractController
         $this->shipping_id = [];
         $this->product_class_id = [];
         $this->order_item = [];
-        $this->product_image = [];
+        $this->product_images = [];
 
         $form = $this->createForm(ConfigType::class);
         $form->handleRequest($request);
@@ -670,11 +670,18 @@ class ConfigController extends AbstractController
 
                     // product_image
                     if (!empty($data['main_large_image'])) {
-                        $this->product_image[$data['product_id']] = $data['main_large_image'];
+                        $this->product_images[$data['product_id']] = [$data['main_large_image']];
                     } elseif (!empty($data['main_image'])) {
-                        $this->product_image[$data['product_id']] = $data['main_image'];
+                        $this->product_images[$data['product_id']] = [$data['main_image']];
                     } elseif (!empty($data['main_list_image'])) {
-                        $this->product_image[$data['product_id']] = $data['main_list_image'];
+                        $this->product_images[$data['product_id']] = [$data['main_list_image']];
+                    }
+                    for ($sub_image_id=1; $sub_image_id <= 6; $sub_image_id++) {
+                        if (!empty($data['sub_large_image' . $sub_image_id])) {
+                            $this->product_images[$data['product_id']][] = $data['sub_large_image' . $sub_image_id];
+                        } elseif (!empty($data['sub_image' . $sub_image_id])) {
+                            $this->product_images[$data['product_id']][] = $data['sub_image' . $sub_image_id];
+                        }
                     }
                 }
 
@@ -999,23 +1006,25 @@ class ConfigController extends AbstractController
 
         $i = 1;
         $batchSize = 20;
-        foreach ($this->product_image as $product_id => $file_name) {
-            $data['id'] = $i;
-            $data['product_id'] = $product_id;
-            $data['creator_id'] = null;
-            $data['file_name'] = $file_name;
-            $data['sort_no'] = 1;   // 1ファイルのみ移行するため、1固定で
+        foreach ($this->product_images as $product_id => $file_names) {
+            foreach ($file_names as $image_id => $file_name) {
+                $data['id'] = $i;
+                $data['product_id'] = $product_id;
+                $data['creator_id'] = null;
+                $data['file_name'] = $file_name;
+                $data['sort_no'] = $image_id + 1;
 
-            $data['create_date'] = date('Y-m-d H:i:s');
-            $data['discriminator_type'] = 'productimage';
+                $data['create_date'] = date('Y-m-d H:i:s');
+                $data['discriminator_type'] = 'productimage';
 
-            $builder->setValues($data);
+                $builder->setValues($data);
 
-            // 20件に1回SQLを発行してメモリを開放する。
-            if (($i % $batchSize) === 0) {
-                $builder->execute();
+                // 20件に1回SQLを発行してメモリを開放する。
+                if (($i % $batchSize) === 0) {
+                    $builder->execute();
+                }
+                $i++;
             }
-            $i++;
         }
         if (count($builder->getValues()) > 0) {
             $builder->execute();
