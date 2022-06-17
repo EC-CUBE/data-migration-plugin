@@ -82,18 +82,15 @@ jobs:
 
       - name: Setup EC-CUBE and Plugin
         run: |
-          composer compile
+          bin/console doctrine:database:create
+          bin/console doctrine:schema:create
+          bin/console eccube:fixtures:load
           bin/console eccube:plugin:install --code $PLUGIN_NAME
           bin/console cache:clear --no-warmup
           bin/console eccube:plugin:enable --code $PLUGIN_NAME
         env:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
-
-      - name: SHOW DATABASES
-        if: matrix.database == 'mysql'
-        run: |
-          mysql --host 127.0.0.1 --port 3306 -uroot -ppassword -e "SHOW DATABASES"
 
       - name: Run Tests for EC-CUBE4.2
         run: |
