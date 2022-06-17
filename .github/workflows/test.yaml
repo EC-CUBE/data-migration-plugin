@@ -90,7 +90,8 @@ jobs:
           DATABASE_URL: ${{ matrix.database_url }}
           DATABASE_SERVER_VERSION: ${{ matrix.database_server_version }}
 
-      - name: if: matrix.database == 'mysql'
+      - name: SHOW DATABASES
+        if: matrix.database == 'mysql'
         run: |
           mysql --host 127.0.0.1 --port 3306 -uroot -ppassword -e "SHOW DATABASES"
 
