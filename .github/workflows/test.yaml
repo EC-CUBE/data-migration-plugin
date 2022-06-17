@@ -95,6 +95,7 @@ jobs:
           APP_DEBUG: 0
 
       - name: Setup Plugin
+        run: |
           bin/console eccube:plugin:install --code $PLUGIN_NAME
           bin/console cache:clear --no-warmup
           bin/console eccube:plugin:enable --code $PLUGIN_NAME
