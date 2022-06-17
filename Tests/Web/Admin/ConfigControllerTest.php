@@ -78,6 +78,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         //self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
 
         $customers = $this->entityManager->getRepository(Customer::class)->findAll();
+        var_dump($customers);
         self::assertEquals($c, count($customers));
 
         if ($p > 0) {

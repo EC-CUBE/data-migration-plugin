@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         eccube-versions: ['4.2']
-        php-versions: [8.0,8.1]
+        php-versions: [7.4,8.0,8.1]
         database: [mysql, pgsql]
         include:
           - database: mysql
@@ -20,7 +20,7 @@ jobs:
             database_charset: utf8mb4
           - database: pgsql
             database_url: postgres://postgres:password@127.0.0.1:5432/eccube_db
-            database_server_version: 14
+            database_server_version: 11
             database_charset: utf8
 
     services:
