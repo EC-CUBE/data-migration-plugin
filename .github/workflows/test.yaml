@@ -10,8 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        eccube-versions: ['4.0','4.1']
-        php-versions: [7.1,7.2,7.3,7.4]
+        eccube-versions: ['4.2']
+        php-versions: [7.4,8.0,8.1]
         database: [mysql, pgsql]
         include:
           - database: mysql

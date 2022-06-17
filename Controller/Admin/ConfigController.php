@@ -2,16 +2,16 @@
 
 namespace Plugin\DataMigration4\Controller\Admin;
 
+use Doctrine\DBAL\Driver\Connection;
 use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
-use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
 use nobuhiko\BulkInsertQuery\BulkInsertQuery;
+use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Filesystem\Filesystem;
-use Doctrine\DBAL\Driver\Connection;
+use Symfony\Component\HttpFoundation\Request;
 use wapmorgan\UnifiedArchive\UnifiedArchive;
 
 class ConfigController extends AbstractController
