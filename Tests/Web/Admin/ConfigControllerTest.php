@@ -49,7 +49,7 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
         $fs = new Filesystem();
         $fs->copy($file, $testFile);
 
-        $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, null, true);
+        $file = new UploadedFile($testFile, 'test.tar.gz', 'application/x-tar', null, true);
 
         $post =
             [
