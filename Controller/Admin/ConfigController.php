@@ -1113,9 +1113,9 @@ class ConfigController extends AbstractController
 
     private function setIdSeq($em, $tableName)
     {
-        $max = $em->fetchColumn('SELECT coalesce(max(id), 0) + 1  FROM '.$tableName);
+        $max = $em->fetchOne('SELECT coalesce(max(id), 0) + 1  FROM '.$tableName);
         $seq = $tableName.'_id_seq';
-        $count = $em->fetchColumn("select count(*) from pg_class where relname = '$seq';");
+        $count = $em->fetchOne("select count(*) from pg_class where relname = '$seq';");
         if ($count) {
             $em->exec("SELECT setval('$seq', $max);");
         }
@@ -1604,7 +1604,7 @@ class ConfigController extends AbstractController
         $builder = new BulkInsertQuery($em, $tableName);
         $builder->setColumns($listTableColumns);
 
-        $i = $em->fetchColumn('SELECT max(id) + 1  FROM '.$tableName);
+        $i = $em->fetchOne('SELECT max(id) + 1  FROM '.$tableName);
         $batchSize = 20;
         foreach ($this->order_item as $order_id => $type) {
             foreach ($type as $key => $value) {
