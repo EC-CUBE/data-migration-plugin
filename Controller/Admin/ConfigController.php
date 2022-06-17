@@ -2,7 +2,9 @@
 
 namespace Plugin\DataMigration4\Controller\Admin;
 
-use Doctrine\DBAL\Driver\Connection;
+//use Doctrine\DBAL\Driver\Connection;
+use Doctrine\DBAL\Connection;
+
 use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
