@@ -84,7 +84,7 @@ jobs:
 
       - name: Setup EC-CUBE
         run: |
-          bin/console doctrine:database:create
+          #bin/console doctrine:database:create
           bin/console doctrine:schema:create
           bin/console eccube:fixtures:load
         env:
