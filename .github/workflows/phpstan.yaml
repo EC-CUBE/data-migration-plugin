@@ -1,7 +1,7 @@
 name: PHPStan
 on: [workflow_dispatch, pull_request]
 env:
-  PLUGIN_NAME: DataMigration4
+  PLUGIN_NAME: DataMigration42
   DATABASE_URL: mysql://root:root@127.0.0.1:3306/eccube_db
   DATABASE_SERVER_VERSION: 5
 

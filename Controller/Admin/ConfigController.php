@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugin\DataMigration4\Controller\Admin;
+namespace Plugin\DataMigration42\Controller\Admin;
 
 //use Doctrine\DBAL\Driver\Connection;
 use Doctrine\DBAL\Connection;
@@ -9,7 +9,7 @@ use Eccube\Controller\AbstractController;
 use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
 use nobuhiko\BulkInsertQuery\BulkInsertQuery;
-use Plugin\DataMigration4\Form\Type\Admin\ConfigType;
+use Plugin\DataMigration42\Form\Type\Admin\ConfigType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Component\Filesystem\Filesystem;
@@ -64,8 +64,8 @@ class ConfigController extends AbstractController
     }
 
     /**
-     * @Route("/%eccube_admin_route%/data_migration4/config", name="data_migration4_admin_config")
-     * @Template("@DataMigration4/admin/config.twig")
+     * @Route("/%eccube_admin_route%/data_migration42/config", name="data_migration42_admin_config")
+     * @Template("@DataMigration42/admin/config.twig")
      */
     public function index(Request $request, Connection $em)
     {
@@ -191,7 +191,8 @@ class ConfigController extends AbstractController
         if (!empty($this->order_item)) {
             // すでに移行されている税率設定から取得する
             $sql = 'SELECT * FROM dtb_tax_rule WHERE product_id IS NULL AND product_class_id IS NULL ORDER BY apply_date DESC';
-            $tax_rules = $em->fetchAll($sql);
+            $stmt = $em->query($sql);
+            $tax_rules = $stmt->fetchAllAssociative();
             foreach ($tax_rules as $tax_rule) {
                 $this->tax_rule[$tax_rule['apply_date']] = [
                     'rounding_type_id' => $tax_rule['rounding_type_id'],
@@ -921,8 +922,7 @@ class ConfigController extends AbstractController
         FROM dtb_class_combination as c1
         where parent_class_combination_id is not null
         ');
-        $stmt->execute();
-        $all = $stmt->fetchAll();
+        $all = $stmt->fetchAllAssociative();
 
         $this->dtb_class_combination = [];
         foreach ($all as $line) {
@@ -937,8 +937,7 @@ class ConfigController extends AbstractController
         FROM dtb_class_combination as c1
         where parent_class_combination_id is null
         ');
-        $stmt->execute();
-        $all = $stmt->fetchAll();
+        $all = $stmt->fetchAllAssociative();
 
         foreach ($all as $line) {
             $this->dtb_class_combination[$line['class_combination_id']] = $line;
