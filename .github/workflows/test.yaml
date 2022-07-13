@@ -151,3 +151,10 @@ jobs:
           PLUGIN_CODE: ${{ matrix.plugin_code }}
         working-directory: 'ec-cube'
         run: bin/console eccube:plugin:uninstall --code=${PLUGIN_CODE}
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: php${{ matrix.php }}-${{ matrix.db }}-logs
+          path: var/log/
