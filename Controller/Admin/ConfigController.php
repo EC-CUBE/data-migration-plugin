@@ -33,6 +33,8 @@ class ConfigController extends AbstractController
     protected $flag_244 = false;
     /** @var bool */
     protected $flag_3 = false;
+    /** @var bool */
+    protected $flag_4 = false;
     /** @var array */
     protected $delivery_id = [];
     /** @var array */
@@ -78,6 +80,10 @@ class ConfigController extends AbstractController
 
         $form = $this->createForm(ConfigType::class);
         $form->handleRequest($request);
+
+        if(0 === strpos(PHP_OS, 'WIN')) {
+            setlocale(LC_CTYPE, 'C');
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             // logをオフにしてメモリを減らす
@@ -137,6 +143,13 @@ class ConfigController extends AbstractController
                 $this->flag_3 = true;
             }
 
+
+            $this->flag_4 = false;
+            // 4.0/4.1系の場合
+            if (file_exists($csvDir.'dtb_order_item.csv')) {
+                $this->flag_4 = true;
+            }
+
             // 会員・受注のみ移行
             if ($form['customer_order_only']->getData()) {
                 $this->saveCustomerAndOrder($em, $csvDir);
@@ -175,7 +188,10 @@ class ConfigController extends AbstractController
         // 会員
         $this->saveToC($em, $csvDir, 'dtb_customer');
 
-        if ($this->flag_3) {
+        if ($this->flag_4) {
+            $this->saveToC($em, $csvDir, 'dtb_customer_address');
+            $this->saveToO($em, $csvDir, 'dtb_delivery_time');
+        } else if ($this->flag_3) {
             $this->saveToC($em, $csvDir, 'dtb_customer_address');
             $this->saveToO($em, $csvDir, 'dtb_delivery_time');
         } else {
@@ -186,7 +202,11 @@ class ConfigController extends AbstractController
         $this->saveToO($em, $csvDir, 'dtb_order');
         $this->saveToO($em, $csvDir, 'dtb_shipping');
         $this->saveToO($em, $csvDir, 'dtb_mail_history', 'dtb_mail_history');
-        $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
+        if ($this->flag_4) {
+            $this->saveToO($em, $csvDir, 'dtb_order_item');
+        } else {
+            $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
+        }
 
         if (!empty($this->order_item)) {
             // すでに移行されている税率設定から取得する
@@ -234,8 +254,16 @@ class ConfigController extends AbstractController
 
             $this->saveToC($em, $csvDir, 'mtb_job', null, true);
             $this->saveToC($em, $csvDir, 'mtb_sex', null, true);
+
+            if ($this->flag_4) {
+                $this->saveToC($em, $csvDir, 'mtb_customer_order_status', null, true);
+                $this->saveToC($em, $csvDir, 'mtb_customer_status', null, true);
+            }
+
             $this->saveToC($em, $csvDir, 'dtb_customer');
-            if ($this->flag_3) {
+            if ($this->flag_4) {
+                $this->saveToC($em, $csvDir, 'dtb_customer_address');
+            } else if ($this->flag_3) {
                 // fixme 余計なデータが移行される
                 $this->saveToC($em, $csvDir, 'dtb_customer_address');
             } else {
@@ -308,69 +336,85 @@ class ConfigController extends AbstractController
 
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
-                    if ($column == 'id' && $tableName == 'dtb_customer') { // fixme
-                        $value[$column] = $data['customer_id'];
-                    } elseif ($column == 'customer_status_id') {
-                        // 退会が追加された
-                        $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
-                    } elseif ($column == 'postal_code') {
-                        $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
-                        if (empty($value[$column])) {
-                            $value[$column] = null;
-                        }
-                    } elseif ($column == 'phone_number') {
-                        $value[$column] = mb_substr(mb_convert_kana($data['tel01'].$data['tel02'].$data['tel03'], 'a'), 0, 14); //14文字制限
-                        if (empty($value[$column])) {
-                            $value[$column] = null;
-                        }
-                    } elseif ($column == 'sex_id') {
-                        $value[$column] = empty($data['sex']) ? null : $data['sex'];
-                    } elseif ($column == 'job_id') {
-                        $value[$column] = empty($data['job']) ? null : $data['job']; // 0が入っている場合あり?
-                    } elseif ($column == 'pref_id') {
-                        $value[$column] = empty($data['pref']) ? null : $data['pref'];
-                    } elseif ($column == 'work_id') {
-                        // 削除されているメンバーは非稼働で登録
-                        $value[$column] = ($data['del_flg'] == 1) ? 0 : $data['work'];
-                    } elseif ($column == 'authority_id') {
-                        $value[$column] = $data['authority'];
-                    } elseif ($column == 'email') {
-                        // 退会時はランダムな値に更新
-                        if ($data['del_flg'] == 1) {
-                            $value[$column] = StringUtil::random(60).'@dummy.dummy';
+                    if ($this->flag_4 == true) {
+                        if ($allow_zero) {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
-                            $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
                         }
-                    } elseif ($column == 'password' || $column == 'name01' || $column == 'name02') {
-                        $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
-                    } elseif ($column == 'sort_no') {
-                        $value[$column] = $data['rank'];
-                    } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
-                    } elseif ($column == 'login_date' || $column == 'first_buy_date') {
-                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
-                    } elseif ($column == 'secret_key') { // 実験
-                        $value[$column] = mt_rand();
-                    } elseif ($column == 'point') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
-                    } elseif ($column == 'salt') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : null;  // @see https://github.com/EC-CUBE/data-migration-plugin/issues/38
-                    } elseif ($column == 'creator_id') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
-                    } elseif ($column == 'plg_mailmagazine_flg') {
-                        $value[$column] = (!empty($data['mailmaga_flg']) && $data['mailmaga_flg'] != 3) ? 1 : 0; // メルマガプラグイン
-                    } elseif ($column == 'id' && $tableName == 'dtb_member') {
-                        $value[$column] = $data['member_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_customer_address') {
-                        // カラム名が違うので
-                        $value[$column] = $i;
-                    } elseif ($column == 'discriminator_type') {
-                        $search = ['dtb_', 'mtb_', '_'];
-                        $value[$column] = str_replace($search, '', $tableName);
-                    } elseif ($allow_zero) {
-                        $value[$column] = isset($data[$column]) ? $data[$column] : null;
+
+                        if ($column == 'buy_times') {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : 0;
+                        }
                     } else {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        if ($column == 'id' && $tableName == 'dtb_customer') { // fixme
+                            $value[$column] = $data['customer_id'];
+                        } elseif ($column == 'customer_status_id') {
+                            // 退会が追加された
+                            $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
+                        } elseif ($column == 'postal_code') {
+                            $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
+                            if (empty($value[$column])) {
+                                $value[$column] = null;
+                            }
+                        } elseif ($column == 'phone_number') {
+                            $value[$column] = mb_substr(mb_convert_kana($data['tel01'].$data['tel02'].$data['tel03'], 'a'), 0, 14); //14文字制限
+                            if (empty($value[$column])) {
+                                $value[$column] = null;
+                            }
+                        } elseif ($column == 'sex_id') {
+                            $value[$column] = empty($data['sex']) ? null : $data['sex'];
+                        } elseif ($column == 'job_id') {
+                            $value[$column] = empty($data['job']) ? null : $data['job']; // 0が入っている場合あり?
+                        } elseif ($column == 'pref_id') {
+                            $value[$column] = empty($data['pref']) ? null : $data['pref'];
+                        } elseif ($column == 'work_id') {
+                            // 削除されているメンバーは非稼働で登録
+                            $value[$column] = ($data['del_flg'] == 1) ? 0 : $data['work'];
+                        } elseif ($column == 'authority_id') {
+                            $value[$column] = $data['authority'];
+                        } elseif ($column == 'email') {
+                            // 退会時はランダムな値に更新
+                            if ($data['del_flg'] == 1) {
+                                $value[$column] = StringUtil::random(60).'@dummy.dummy';
+                            } else {
+                                $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
+                            }
+                        } elseif ($column == 'password' || $column == 'name01' || $column == 'name02') {
+                            $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
+                        } elseif ($column == 'sort_no') {
+                            if ($this->flag_4 == true) {
+                                $value[$column] = $data['sort_no'];
+                            } else {
+                                $value[$column] = $data['rank'];
+                            }
+                        } elseif ($column == 'create_date' || $column == 'update_date') {
+                            $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
+                        } elseif ($column == 'login_date' || $column == 'first_buy_date') {
+                            $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
+                        } elseif ($column == 'secret_key') { // 実験
+                            $value[$column] = mt_rand();
+                        } elseif ($column == 'point') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'salt') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;  // @see https://github.com/EC-CUBE/data-migration-plugin/issues/38
+                        } elseif ($column == 'creator_id') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
+                        } elseif ($column == 'plg_mailmagazine_flg') {
+                            $value[$column] = (!empty($data['mailmaga_flg']) && $data['mailmaga_flg'] != 3) ? 1 : 0; // メルマガプラグイン
+                        } elseif ($column == 'id' && $tableName == 'dtb_member') {
+                            $value[$column] = $data['member_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_customer_address') {
+                            // カラム名が違うので
+                            $value[$column] = $i;
+                        } elseif ($column == 'discriminator_type') {
+                            $search = ['dtb_', 'mtb_', '_'];
+                            $value[$column] = str_replace($search, '', $tableName);
+                        } elseif ($allow_zero) {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : null;
+                        } else {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        }
                     }
                 }
                 $builder->setValues($value);
@@ -394,7 +438,9 @@ class ConfigController extends AbstractController
 
     private function saveProduct($em, $csvDir)
     {
-        if ($this->flag_3) {
+        if ($this->flag_4) {
+            $product_db_name = 'dtb_product';
+        } else if ($this->flag_3) {
             $product_db_name = 'dtb_product';
         } else {
             $product_db_name = 'dtb_products';
@@ -417,7 +463,21 @@ class ConfigController extends AbstractController
                 $this->fix211classCombination($em, $platform, $csvDir);
             }
 
-            if ($this->flag_3) {
+            if ($this->flag_4) {
+                $this->saveToC($em, $csvDir, 'mtb_product_status', null, true);
+                $this->saveToC($em, $csvDir, 'mtb_sale_type', null, true);
+                $this->saveToP($em, $csvDir, 'dtb_product');
+                $this->saveToO($em, $csvDir, 'dtb_delivery_duration');
+                $this->saveToP($em, $csvDir, 'dtb_product_class');
+                $this->saveToP($em, $csvDir, 'dtb_class_category');
+                $this->saveToP($em, $csvDir, 'dtb_class_name');
+                $this->saveToP($em, $csvDir, 'dtb_product_category');
+                $this->saveToP($em, $csvDir, 'dtb_product_stock');
+                $this->saveToP($em, $csvDir, 'dtb_product_image');
+                $this->saveToP($em, $csvDir, 'dtb_tag');
+                $this->saveToP($em, $csvDir, 'dtb_product_tag');
+                $this->saveToP($em, $csvDir, 'dtb_customer_favorite_product');
+            } else if ($this->flag_3) {
                 $this->saveToP($em, $csvDir, 'dtb_product');
                 $this->saveToP($em, $csvDir, 'dtb_product_class');
                 $this->saveToP($em, $csvDir, 'dtb_class_category');
@@ -554,157 +614,184 @@ class ConfigController extends AbstractController
 
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
-                    if ($column == 'id' && $tableName == 'dtb_product') {
-                        $value[$column] = $data['product_id'];
-
-                    } elseif ($column == 'id' && $tableName == 'dtb_customer_favorite_product') {
-                        $value[$column] = $i;
-
-                    } elseif ($column == 'product_status_id') {
-                        // 退会が追加された
-                        $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
-                    } elseif ($column == 'price02') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
-                    } elseif ($column == 'name') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : '';
-
-                    // カラム名が違うので
-                    } elseif ($column == 'description_list') {
-                        $value[$column] = isset($data['main_list_comment'])
-                            ? mb_substr($data['main_list_comment'], 0, 3999)
-                            : null;
-                    } elseif ($column == 'description_detail') {
-                        $value[$column] = isset($data['main_comment'])
-                            ? mb_substr($data['main_comment'], 0, 3999)
-                            : null;
-                    } elseif ($column == 'search_word') {
-                        $value[$column] = isset($data['comment3'])
-                            ? mb_substr($data['comment3'], 0, 3999)
-                            : null;
-                    } elseif ($column == 'free_area' && isset($data['sub_title1'])) {
-                        $value[$column] = $data['sub_title1']."\n".$data['sub_comment1']."\n"
-                            .$data['sub_title2']."\n".$data['sub_comment2']."\n"
-                            .$data['sub_title3']."\n".$data['sub_comment3']."\n"
-                            .$data['sub_title4']."\n".$data['sub_comment4']."\n"
-                            .$data['sub_title5']."\n".$data['sub_comment5']."\n"
-                            ;
-
-                    // ---> dtb_product_class
-                    } elseif ($column == 'sale_type_id') {
-                        $value[$column] = isset($data['product_type_id']) ? $data['product_type_id'] : 1;
-                    } elseif ($column == 'class_category_id1') {
-                        $value[$column] = !empty($data['classcategory_id1']) ? $data['classcategory_id1'] : null;
-
-                        if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
-                            $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id1'];
-                        }
-                    } elseif ($column == 'class_category_id2') {
-                        $value[$column] = !empty($data['classcategory_id2']) ? $data['classcategory_id2'] : null;
-
-                        if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
-                            $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id2'];
-                        }
-                    } elseif ($column == 'delivery_fee') {
-                        $value[$column] = (isset($data['delivery_fee']) && is_numeric($data['delivery_fee'])) ? $data['delivery_fee'] : null;
-                    } elseif ($column == 'stock') {
-                        $value[$column] = isset($data['stock']) && $data['stock'] !== ''
-                            ? $data['stock']
-                            : null;
-
-                        // dtb_product_stock
-                        // todo 2.4系の場合、データが足りない
-                        $this->stock[$data['product_class_id']] = $value[$column];
-
-                    // class_category
-                    } elseif ($column == 'class_category_id') {
-                        $value[$column] = !empty($data['classcategory_id']) ? $data['classcategory_id'] : 0;
-                    } elseif ($column == 'class_name_id') {
-                        $value[$column] = isset($data['class_id']) ? $data['class_id'] : null;
-                    } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && strpos($data[$column], '000') === false) ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
-                    } elseif ($column == 'login_date' || $column == 'first_buy_date') {
-                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
-                    } elseif ($column == 'creator_id') {
-                        $value[$column] = null; // 固定
-                    } elseif ($column == 'stock_unlimited') {
-                        $value[$column] = isset($data[$column]) ? $data[$column] : 1;
-                    } elseif ($column == 'sort_no') {
-                        $value[$column] = $data['rank'];
-                    } elseif ($column == 'hierarchy') {
-                        $value[$column] = $data['level'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_product_class') {
-                        $value[$column] = $data['product_class_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_category') {
-                        $value[$column] = $data['category_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_class_category') {
-                        $value[$column] = $data['classcategory_id'];
-                    } elseif ($column == 'visible' && $tableName == 'dtb_class_category') {
-                        $value[$column] = ($data['del_flg']) ? 0 : 1;
-                    } elseif ($column == 'id' && $tableName == 'dtb_class_name') {
-                        $value[$column] = $data['class_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_product_stock') {
-                        $value[$column] = $data['product_stock_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_product_image') {
-                        $value[$column] = $data['product_image_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_product_tag') {
-                        $value[$column] = $i;
-                    } elseif ($column == 'tag_id' && $tableName == 'dtb_product_tag') {
-                        if ($this->flag_3) {
-                            $value[$column] = isset($data['tag']) && strlen($data['tag'] > 0) ? $data['tag'] : 0;
+                    if ($this->flag_4 == true) {
+                        if ($allow_zero) {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
-                            $value[$column] = isset($data['product_status_id']) && strlen($data['product_status_id'] > 0) ? $data['product_status_id'] : 0;
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
                         }
-                        // 共通処理
-                    } elseif ($column == 'discriminator_type') {
-                        $search = ['dtb_', 'mtb_', '_'];
-                        $value[$column] = str_replace($search, '', $tableName);
-                    } elseif ($allow_zero) {
-                        $value[$column] = isset($data[$column]) ? $data[$column] : null;
+
+                        // delivery_duration_id
+                        if (isset($data['deliv_date_id'])) {
+                            // delivery_date_id <-- deliv_date_id (dtb_products)
+                            $this->delivery_id[$data['product_id']] = $data['deliv_date_id'];
+                        }
+    
+                        // product_image
+                        if (!empty($data['main_large_image'])) {
+                            $this->product_image[$data['product_id']] = $data['main_large_image'];
+                        } elseif (!empty($data['main_image'])) {
+                            $this->product_image[$data['product_id']] = $data['main_image'];
+                        } elseif (!empty($data['main_list_image'])) {
+                            $this->product_image[$data['product_id']] = $data['main_list_image'];
+                        }
                     } else {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : null;
-                    }
-
-                    // delivery_duration_id
-                    if (isset($data['deliv_date_id'])) {
-                        // delivery_date_id <-- deliv_date_id (dtb_products)
-                        $this->delivery_id[$data['product_id']] = $data['deliv_date_id'];
-                    }
-
-                    // product_image
-                    if (!empty($data['main_large_image'])) {
-                        $this->product_image[$data['product_id']] = $data['main_large_image'];
-                    } elseif (!empty($data['main_image'])) {
-                        $this->product_image[$data['product_id']] = $data['main_image'];
-                    } elseif (!empty($data['main_list_image'])) {
-                        $this->product_image[$data['product_id']] = $data['main_list_image'];
+                        if ($column == 'id' && $tableName == 'dtb_product') {
+                            $value[$column] = $data['product_id'];
+    
+                        } elseif ($column == 'id' && $tableName == 'dtb_customer_favorite_product') {
+                            $value[$column] = $i;
+    
+                        } elseif ($column == 'product_status_id') {
+                            // 退会が追加された
+                            $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
+                        } elseif ($column == 'price02') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'name') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : '';
+    
+                        // カラム名が違うので
+                        } elseif ($column == 'description_list') {
+                            $value[$column] = isset($data['main_list_comment'])
+                                ? mb_substr($data['main_list_comment'], 0, 3999)
+                                : null;
+                        } elseif ($column == 'description_detail') {
+                            $value[$column] = isset($data['main_comment'])
+                                ? mb_substr($data['main_comment'], 0, 3999)
+                                : null;
+                        } elseif ($column == 'search_word') {
+                            $value[$column] = isset($data['comment3'])
+                                ? mb_substr($data['comment3'], 0, 3999)
+                                : null;
+                        } elseif ($column == 'free_area' && isset($data['sub_title1'])) {
+                            $value[$column] = $data['sub_title1']."\n".$data['sub_comment1']."\n"
+                                .$data['sub_title2']."\n".$data['sub_comment2']."\n"
+                                .$data['sub_title3']."\n".$data['sub_comment3']."\n"
+                                .$data['sub_title4']."\n".$data['sub_comment4']."\n"
+                                .$data['sub_title5']."\n".$data['sub_comment5']."\n"
+                                ;
+    
+                        // ---> dtb_product_class
+                        } elseif ($column == 'sale_type_id') {
+                            $value[$column] = isset($data['product_type_id']) ? $data['product_type_id'] : 1;
+                        } elseif ($column == 'class_category_id1') {
+                            $value[$column] = !empty($data['classcategory_id1']) ? $data['classcategory_id1'] : null;
+    
+                            if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
+                                $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id1'];
+                            }
+                        } elseif ($column == 'class_category_id2') {
+                            $value[$column] = !empty($data['classcategory_id2']) ? $data['classcategory_id2'] : null;
+    
+                            if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
+                                $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id2'];
+                            }
+                        } elseif ($column == 'delivery_fee') {
+                            $value[$column] = (isset($data['delivery_fee']) && is_numeric($data['delivery_fee'])) ? $data['delivery_fee'] : null;
+                        } elseif ($column == 'stock') {
+                            $value[$column] = isset($data['stock']) && $data['stock'] !== ''
+                                ? $data['stock']
+                                : null;
+    
+                            // dtb_product_stock
+                            // todo 2.4系の場合、データが足りない
+                            $this->stock[$data['product_class_id']] = $value[$column];
+    
+                        // class_category
+                        } elseif ($column == 'class_category_id') {
+                            $value[$column] = !empty($data['classcategory_id']) ? $data['classcategory_id'] : 0;
+                        } elseif ($column == 'class_name_id') {
+                            $value[$column] = isset($data['class_id']) ? $data['class_id'] : null;
+                        } elseif ($column == 'create_date' || $column == 'update_date') {
+                            $value[$column] = (isset($data[$column]) && strpos($data[$column], '000') === false) ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
+                        } elseif ($column == 'login_date' || $column == 'first_buy_date') {
+                            $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
+                        } elseif ($column == 'creator_id') {
+                            $value[$column] = null; // 固定
+                        } elseif ($column == 'stock_unlimited') {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : 1;
+                        } elseif ($column == 'sort_no') {
+                            $value[$column] = $data['rank'];
+                        } elseif ($column == 'hierarchy') {
+                            $value[$column] = $data['level'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_product_class') {
+                            $value[$column] = $data['product_class_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_category') {
+                            $value[$column] = $data['category_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_class_category') {
+                            $value[$column] = $data['classcategory_id'];
+                        } elseif ($column == 'visible' && $tableName == 'dtb_class_category') {
+                            $value[$column] = ($data['del_flg']) ? 0 : 1;
+                        } elseif ($column == 'id' && $tableName == 'dtb_class_name') {
+                            $value[$column] = $data['class_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_product_stock') {
+                            $value[$column] = $data['product_stock_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_product_image') {
+                            $value[$column] = $data['product_image_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_product_tag') {
+                            $value[$column] = $i;
+                        } elseif ($column == 'tag_id' && $tableName == 'dtb_product_tag') {
+                            if ($this->flag_3) {
+                                $value[$column] = isset($data['tag']) && strlen($data['tag'] > 0) ? $data['tag'] : 0;
+                            } else {
+                                $value[$column] = isset($data['product_status_id']) && strlen($data['product_status_id'] > 0) ? $data['product_status_id'] : 0;
+                            }
+                            // 共通処理
+                        } elseif ($column == 'discriminator_type') {
+                            $search = ['dtb_', 'mtb_', '_'];
+                            $value[$column] = str_replace($search, '', $tableName);
+                        } elseif ($allow_zero) {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : null;
+                        } else {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        }
+    
+                        // delivery_duration_id
+                        if (isset($data['deliv_date_id'])) {
+                            // delivery_date_id <-- deliv_date_id (dtb_products)
+                            $this->delivery_id[$data['product_id']] = $data['deliv_date_id'];
+                        }
+    
+                        // product_image
+                        if (!empty($data['main_large_image'])) {
+                            $this->product_image[$data['product_id']] = $data['main_large_image'];
+                        } elseif (!empty($data['main_image'])) {
+                            $this->product_image[$data['product_id']] = $data['main_image'];
+                        } elseif (!empty($data['main_list_image'])) {
+                            $this->product_image[$data['product_id']] = $data['main_list_image'];
+                        }
                     }
                 }
 
                 // 別テーブルからのデータなど
                 switch ($tableName) {
                     case 'dtb_product_class':
-                        $value['delivery_duration_id'] = !empty($this->delivery_id[$value['product_id']]) ? $this->delivery_id[$value['product_id']] : null;
+                        if ($this->flag_4 == false) {
+                            $value['delivery_duration_id'] = !empty($this->delivery_id[$value['product_id']]) ? $this->delivery_id[$value['product_id']] : null;
 
-                        // 244用
-                        if ($this->flag_244) {
-                            $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']] = $data['product_class_id'];
-                        }
+                            // 244用
+                            if ($this->flag_244) {
+                                $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']] = $data['product_class_id'];
+                            }
 
-                        $value['currency_code'] = 'JPY'; // とりあえず固定
+                            $value['currency_code'] = 'JPY'; // とりあえず固定
 
-                        // del_flgの代わり
-                        if (isset($data['status']) && $data['status'] == 1) {
-                            $value['visible'] = $data['status']; // todo
-                        } else {
-                            $value['visible'] = !empty($data['del_flg']) ? 0 : 1;
+                            // del_flgの代わり
+                            if (isset($data['status']) && $data['status'] == 1) {
+                                $value['visible'] = $data['status']; // todo
+                            } else {
+                                $value['visible'] = !empty($data['del_flg']) ? 0 : 1;
+                            }
                         }
                         break;
                     case 'dtb_customer_favorite_product':
 
-                        // 3系には del_flg がある
-                        if ($data['del_flg'] == 1) {
-                            unset($value);
-                            continue 2;
+                        if ($this->flag_4 == false) {
+                            // 3系には del_flg がある
+                            if ($data['del_flg'] == 1) {
+                                unset($value);
+                                continue 2;
+                            }
                         }
 
                         break;
@@ -1139,7 +1226,15 @@ class ConfigController extends AbstractController
             // todo mtb_order_status.display_order_count
             $this->saveToO($em, $csvDir, 'mtb_device_type', null, true);
 
-            if ($this->flag_3) {
+            if ($this->flag_4) {
+                $this->saveToP($em, $csvDir, 'mtb_order_status', null, true);
+                $this->saveToP($em, $csvDir, 'mtb_order_status_color', null, true);
+                $this->saveToP($em, $csvDir, 'mtb_order_item_type', null, true);
+                $this->saveToO($em, $csvDir, 'dtb_delivery_time');
+                $this->saveToO($em, $csvDir, 'dtb_delivery');
+                $this->saveToO($em, $csvDir, 'dtb_delivery_fee');
+                $this->saveToO($em, $csvDir, 'dtb_mail_history');
+            } else if ($this->flag_3) {
                 $this->saveToO($em, $csvDir, 'dtb_delivery_time');
                 $this->saveToO($em, $csvDir, 'dtb_delivery');
                 $this->saveToO($em, $csvDir, 'dtb_delivery_fee');
@@ -1163,14 +1258,23 @@ class ConfigController extends AbstractController
             $this->saveToO($em, $csvDir, 'dtb_tax_rule', null, true); // 税率0にしている場合がある
 
             // todo ダウンロード販売の処理
-            $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
+            if ($this->flag_4 == false) {
+                $this->saveToO($em, $csvDir, 'dtb_order_detail', 'dtb_order_item', true);
+            } else {
+                // v4
+                $this->saveToO($em, $csvDir, 'dtb_order_item');
+                $this->saveToO($em, $csvDir, 'dtb_order_pdf');
+                $this->saveToO($em, $csvDir, 'dtb_payment_option');
+            }
 
             if (!empty($this->order_item)) {
                 $this->saveOrderItem($em);
             }
 
-            // 支払いは基本移行しない
-            $em->exec('DELETE FROM dtb_payment_option');
+            if ($this->flag_4 == false) {
+                // 支払いは基本移行しない
+                $em->exec('DELETE FROM dtb_payment_option');
+            }
 
 
             if ($platform == 'mysql') {
@@ -1260,160 +1364,170 @@ class ConfigController extends AbstractController
 
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
-                    if ($column == 'id' && $tableName == 'dtb_payment') {
-                        $value[$column] = $data['payment_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_delivery') {
-                        $value[$column] = $data['deliv_id'];
-                    } elseif ($column == 'id' && $tableName == 'dtb_delivery_fee') {
-                        $value[$column] = $i; // todo
-                    } elseif ($column == 'id' && $tableName == 'dtb_delivery_time') {
-                        // deliv_idとtime_idで複合主キーだったのが、idのみの主キーとなったため、連番で付与する.
-                        $value[$column] = $i;
-
-                        // dtb_order.deliv_idとdtb_shipping.time_idでお届け時間を特定するため、ここで保持しておく.
-                        $this->delivery_time[$data['deliv_id']][$data['time_id']] = $i;
-                    } elseif ($column == 'order_status_id') {
-                        // 退会が追加された
-                        $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
-
-                        // 4系に存在しないstatusなので
-                        if ($data['status'] == 2) {
-                            $value[$column] = 4;
-                        }
-                        if ($data['status'] == '') {
-                            $value[$column] = 3;
-                        }
-                    } elseif ($column == 'message' || $column == 'note') {
-                        $value[$column] = empty($data[$column]) ? null : mb_substr($data[$column], 0, 4000);
-                    } elseif ($column == 'postal_code') {
-                        $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
-                        if (empty($value[$column])) {
-                            $value[$column] = null;
-                        }
-                    } elseif ($column == 'phone_number') {
-                        $value[$column] = mb_substr(mb_convert_kana($data['tel01'].$data['tel02'].$data['tel03'], 'a'), 0, 14); //14文字制限
-                        if (empty($value[$column])) {
-                            $value[$column] = null;
-                        }
-                    } elseif ($column == 'sex_id') {
-                        $value[$column] = empty($data['sex']) ? null : $data['sex'];
-                    } elseif ($column == 'job_id') {
-                        $value[$column] = empty($data['job']) ? null : $data['job']; // 0が入っている場合あり?
-                    } elseif ($column == 'pref_id') {
-                        $value[$column] = empty($data['pref']) ? null : $data['pref'];
-                    } elseif ($column == 'delivery_fee_total') {
-                        $value[$column] = empty($data['deliv_fee']) ? 0 : $data['deliv_fee'];
-
-                    // --> shipping
-                    } elseif ($column == 'delivery_date') {
-                        $value[$column] = empty($data['date']) ? null : $data['date'];
-                    } elseif ($column == 'shipping_date') {
-                        $value[$column] = empty($data['commit_date']) ? null : self::convertTz($data['commit_date']);
-                    } elseif ($column == 'visible' /*&& $tableName == 'dtb_payment'*/) {
-                        $value[$column] = 0;
-
-                    // --> deliv
-                    } elseif ($column == 'sale_type_id') {
-                        $value[$column] = isset($data['product_type_id']) ? $data['product_type_id'] : 1;
-                    } elseif ($column == 'description') {
-                        $value[$column] = isset($data['remark']) ? $data['remark'] : null;
-                    } elseif ($column == 'delivery_id') {
-                        $value[$column] = isset($data['deliv_id']) ? $data['deliv_id'] : null;
-                    } elseif ($column == 'delivery_time') {
-                        if (isset($data['deliv_time'])) {
-                            $value[$column] = $data['deliv_time'];
-                        } elseif (isset($data['delivery_time']) && strlen($data['delivery_time']) > 0) {
-                            $value[$column] = $data['delivery_time'];
+                    if ($this->flag_4 == true) {
+                        if ($allow_zero) {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
-                            $value[$column] = null;
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
                         }
-                    } elseif ($column == 'fee') {
-                        $value[$column] = !empty($data['fee']) ? $data['fee'] : 0;
-                    // --> payment
-                    } elseif ($column == 'fixed') {
-                        $value[$column] = 1;
-                    } elseif ($column == 'rule_max') {
-                        if ($this->flag_3) {
-                            $value[$column] = isset($data['rule_max']) && strlen($data['rule_max']) > 0 ? $data['rule_max'] : null;
-                        } else {
-                            // 2.13
-                            $value[$column] = !empty($data['upper_rule']) ? $data['upper_rule'] : null;
-                        }
-                    } elseif ($column == 'rule_min') {
-                        if ($this->flag_3) {
-                            $value[$column] = isset($data['rule_min']) && strlen($data['rule_min']) > 0 ? $data['rule_min'] : null;
-                        } else {
-                            // 2.13
-                            $value[$column] = !empty($data['rule_max']) ? $data['rule_max'] :
-                                (!empty($data['rule']) ? $data['rule'] : null ) ;
-                        }
-                    // --> dtb_order_item
-                    } elseif ($column == 'class_category_name1') {
-                        $value[$column] = isset($data['classcategory_name1']) && strlen($data['classcategory_name1']) > 0 ? $data['classcategory_name1'] : null;
-                    } elseif ($column == 'class_category_name2') {
-                        $value[$column] = isset($data['classcategory_name2']) && strlen($data['classcategory_name2']) > 0 ? $data['classcategory_name2'] : null;
-                    } elseif ($column == 'name01' || $column == 'name02') {
-                        $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
-                    } elseif ($column == 'sort_no' && $tableName == 'dtb_shipping') {
-                        $value[$column] = $data['id'];
-                    } elseif ($column == 'sort_no') {
-                        $value[$column] = isset($data['rank']) ? $data['rank'] : 0;
-                    } elseif ($column == 'create_date' || $column == 'update_date') {
-                        $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
-                    } elseif ($column == 'payment_date') {
-                        $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
-                    } elseif ($column == 'creator_id') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
-                    } elseif ($column == 'charge' || $column == 'use_point' || $column == 'add_point' || $column == 'discount' || $column == 'total' || $column == 'subtotal' || $column == 'tax' || $column == 'payment_total') {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
-                    } elseif ($column == 'tax_adjust') {
-                        $value['tax_adjust'] = 0; // 0固定
-                    } elseif ($column == 'discriminator_type') {
-                        $search = ['dtb_', 'mtb_', '_'];
-                        $value[$column] = str_replace($search, '', $tableName);
-                    } elseif ($allow_zero) {
-                        $value[$column] = isset($data[$column]) ? $data[$column] : null;
                     } else {
-                        $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        if ($column == 'id' && $tableName == 'dtb_payment') {
+                            $value[$column] = $data['payment_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_delivery') {
+                            $value[$column] = $data['deliv_id'];
+                        } elseif ($column == 'id' && $tableName == 'dtb_delivery_fee') {
+                            $value[$column] = $i; // todo
+                        } elseif ($column == 'id' && $tableName == 'dtb_delivery_time') {
+                            // deliv_idとtime_idで複合主キーだったのが、idのみの主キーとなったため、連番で付与する.
+                            $value[$column] = $i;
+    
+                            // dtb_order.deliv_idとdtb_shipping.time_idでお届け時間を特定するため、ここで保持しておく.
+                            $this->delivery_time[$data['deliv_id']][$data['time_id']] = $i;
+                        } elseif ($column == 'order_status_id') {
+                            // 退会が追加された
+                            $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
+    
+                            // 4系に存在しないstatusなので
+                            if ($data['status'] == 2) {
+                                $value[$column] = 4;
+                            }
+                            if ($data['status'] == '') {
+                                $value[$column] = 3;
+                            }
+                        } elseif ($column == 'message' || $column == 'note') {
+                            $value[$column] = empty($data[$column]) ? null : mb_substr($data[$column], 0, 4000);
+                        } elseif ($column == 'postal_code') {
+                            $value[$column] = mb_substr(mb_convert_kana($data['zip01'].$data['zip02'], 'a'), 0, 8);
+                            if (empty($value[$column])) {
+                                $value[$column] = null;
+                            }
+                        } elseif ($column == 'phone_number') {
+                            $value[$column] = mb_substr(mb_convert_kana($data['tel01'].$data['tel02'].$data['tel03'], 'a'), 0, 14); //14文字制限
+                            if (empty($value[$column])) {
+                                $value[$column] = null;
+                            }
+                        } elseif ($column == 'sex_id') {
+                            $value[$column] = empty($data['sex']) ? null : $data['sex'];
+                        } elseif ($column == 'job_id') {
+                            $value[$column] = empty($data['job']) ? null : $data['job']; // 0が入っている場合あり?
+                        } elseif ($column == 'pref_id') {
+                            $value[$column] = empty($data['pref']) ? null : $data['pref'];
+                        } elseif ($column == 'delivery_fee_total') {
+                            $value[$column] = empty($data['deliv_fee']) ? 0 : $data['deliv_fee'];
+    
+                        // --> shipping
+                        } elseif ($column == 'delivery_date') {
+                            $value[$column] = empty($data['date']) ? null : $data['date'];
+                        } elseif ($column == 'shipping_date') {
+                            $value[$column] = empty($data['commit_date']) ? null : self::convertTz($data['commit_date']);
+                        } elseif ($column == 'visible' /*&& $tableName == 'dtb_payment'*/) {
+                            $value[$column] = 0;
+    
+                        // --> deliv
+                        } elseif ($column == 'sale_type_id') {
+                            $value[$column] = isset($data['product_type_id']) ? $data['product_type_id'] : 1;
+                        } elseif ($column == 'description') {
+                            $value[$column] = isset($data['remark']) ? $data['remark'] : null;
+                        } elseif ($column == 'delivery_id') {
+                            $value[$column] = isset($data['deliv_id']) ? $data['deliv_id'] : null;
+                        } elseif ($column == 'delivery_time') {
+                            if (isset($data['deliv_time'])) {
+                                $value[$column] = $data['deliv_time'];
+                            } elseif (isset($data['delivery_time']) && strlen($data['delivery_time']) > 0) {
+                                $value[$column] = $data['delivery_time'];
+                            } else {
+                                $value[$column] = null;
+                            }
+                        } elseif ($column == 'fee') {
+                            $value[$column] = !empty($data['fee']) ? $data['fee'] : 0;
+                        // --> payment
+                        } elseif ($column == 'fixed') {
+                            $value[$column] = 1;
+                        } elseif ($column == 'rule_max') {
+                            if ($this->flag_3) {
+                                $value[$column] = isset($data['rule_max']) && strlen($data['rule_max']) > 0 ? $data['rule_max'] : null;
+                            } else {
+                                // 2.13
+                                $value[$column] = !empty($data['upper_rule']) ? $data['upper_rule'] : null;
+                            }
+                        } elseif ($column == 'rule_min') {
+                            if ($this->flag_3) {
+                                $value[$column] = isset($data['rule_min']) && strlen($data['rule_min']) > 0 ? $data['rule_min'] : null;
+                            } else {
+                                // 2.13
+                                $value[$column] = !empty($data['rule_max']) ? $data['rule_max'] :
+                                    (!empty($data['rule']) ? $data['rule'] : null ) ;
+                            }
+                        // --> dtb_order_item
+                        } elseif ($column == 'class_category_name1') {
+                            $value[$column] = isset($data['classcategory_name1']) && strlen($data['classcategory_name1']) > 0 ? $data['classcategory_name1'] : null;
+                        } elseif ($column == 'class_category_name2') {
+                            $value[$column] = isset($data['classcategory_name2']) && strlen($data['classcategory_name2']) > 0 ? $data['classcategory_name2'] : null;
+                        } elseif ($column == 'name01' || $column == 'name02') {
+                            $value[$column] = empty($data[$column]) ? 'Not null violation' : $data[$column];
+                        } elseif ($column == 'sort_no' && $tableName == 'dtb_shipping') {
+                            $value[$column] = $data['id'];
+                        } elseif ($column == 'sort_no') {
+                            $value[$column] = isset($data['rank']) ? $data['rank'] : 0;
+                        } elseif ($column == 'create_date' || $column == 'update_date') {
+                            $value[$column] = (isset($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : date('Y-m-d H:i:s');
+                        } elseif ($column == 'payment_date') {
+                            $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
+                        } elseif ($column == 'creator_id') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
+                        } elseif ($column == 'charge' || $column == 'use_point' || $column == 'add_point' || $column == 'discount' || $column == 'total' || $column == 'subtotal' || $column == 'tax' || $column == 'payment_total') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'tax_adjust') {
+                            $value['tax_adjust'] = 0; // 0固定
+                        } elseif ($column == 'discriminator_type') {
+                            $search = ['dtb_', 'mtb_', '_'];
+                            $value[$column] = str_replace($search, '', $tableName);
+                        } elseif ($allow_zero) {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : null;
+                        } else {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        }
                     }
                 }
 
                 // 別テーブルからのデータなど
                 switch ($tableName) {
                     case 'dtb_order':
-                        // 配送ID
-                        if (isset($data['deliv_id'])) {
-                            $this->delivery_id[$data['id']] = $data['deliv_id'];
-                        }
-                        $value['order_no'] = $data['id'];
-                        $value['order_date'] = self::convertTz($data['create_date']);
-                        $value['currency_code'] = 'JPY'; // とりあえず固定
+                        if ($this->flag_4 == false) {
+                            // 配送ID
+                            if (isset($data['deliv_id'])) {
+                                $this->delivery_id[$data['id']] = $data['deliv_id'];
+                            }
+                            $value['order_no'] = $data['id'];
+                            $value['order_date'] = self::convertTz($data['create_date']);
+                            $value['currency_code'] = 'JPY'; // とりあえず固定
 
-                        // 3は delivery_fee_total
-                        if (isset($data['deliv_fee']) && $data['deliv_fee'] > 0) {
-                            $this->order_item[$data['id']]['deliv_fee'] = [
-                                'price' => $data['deliv_fee'],
-                                'order_date' => $value['order_date'],
-                            ];
-                        }
-                        if ($data['charge'] > 0) {
-                            $this->order_item[$data['id']]['charge'] = [
-                                'price' => $data['charge'],
-                                'order_date' => $value['order_date'],
-                            ];
-                        }
-                        if ($data['discount'] > 0) {
-                            $this->order_item[$data['id']]['discount'] = [
-                                'price' => $data['discount'],
-                                'order_date' => $value['order_date'],
-                            ];
-                        }
-                        // todo 3はプラグイン
-                        if (isset($data['use_point']) && $data['use_point'] > 0) {
-                            $this->order_item[$data['id']]['use_point'] = [
-                                'price' => $data['use_point'],
-                                'order_date' => $value['order_date'],
-                            ];
+                            // 3は delivery_fee_total
+                            if (isset($data['deliv_fee']) && $data['deliv_fee'] > 0) {
+                                $this->order_item[$data['id']]['deliv_fee'] = [
+                                    'price' => $data['deliv_fee'],
+                                    'order_date' => $value['order_date'],
+                                ];
+                            }
+                            if ($data['charge'] > 0) {
+                                $this->order_item[$data['id']]['charge'] = [
+                                    'price' => $data['charge'],
+                                    'order_date' => $value['order_date'],
+                                ];
+                            }
+                            if ($data['discount'] > 0) {
+                                $this->order_item[$data['id']]['discount'] = [
+                                    'price' => $data['discount'],
+                                    'order_date' => $value['order_date'],
+                                ];
+                            }
+                            // todo 3はプラグイン
+                            if (isset($data['use_point']) && $data['use_point'] > 0) {
+                                $this->order_item[$data['id']]['use_point'] = [
+                                    'price' => $data['use_point'],
+                                    'order_date' => $value['order_date'],
+                                ];
+                            }
                         }
 
                         // shippingに紐付けるデータを保持
@@ -1423,7 +1537,12 @@ class ConfigController extends AbstractController
 
                     case 'dtb_shipping':
                         $value['id'] = $i;
-                        $this->shipping_id[$data['order_id']][$data['shipping_id']] = $i;
+
+                        if ($this->flag_4 == true) {
+                            $this->shipping_id[$data['order_id']][$data['id']] = $i;
+                        } else {
+                            $this->shipping_id[$data['order_id']][$data['shipping_id']] = $i;
+                        }
 
                         if ($this->flag_3) {
                             if (isset($data['delivery_id']) & strlen($data['delivery_id']) > 0) {
@@ -1453,10 +1572,19 @@ class ConfigController extends AbstractController
                         break;
 
                     case 'dtb_tax_rule':
-                        $value['id'] = $data['tax_rule_id'];
+                        if ($this->flag_4 == true) {
+                            $value['id'] = $data['id'];
+                        } else {
+                            $value['id'] = $data['tax_rule_id'];
+                        }
                         $value['tax_adjust'] = 0;
                         $value['apply_date'] = self::convertTz($data['apply_date']);
-                        $value['rounding_type_id'] = $data['calc_rule'];
+
+                        if ($this->flag_4 == true) {
+                            $value['rounding_type_id'] = $data['rounding_type_id'];
+                        } else {
+                            $value['rounding_type_id'] = $data['calc_rule'];
+                        }
 
                         if (isset($data['pref_id']) && $data['pref_id'] === '0') {
                             $value['pref_id'] = null;
@@ -1496,58 +1624,60 @@ class ConfigController extends AbstractController
                         break;
 
                     case 'dtb_order_item':
-                        if (isset($data['order_detail_id'])) {
-                            $value['id'] = $data['order_detail_id'];
-                        } else {
-                            $value['id'] = $i; // 2.4.4
-                        }
-                        // dtb_order_detail.tax_ruleははdtb_tax_rule.calc_ruleの値
-                        $value['rounding_type_id'] = isset($data['tax_rule'])
-                            ? $data['tax_rule']
-                            : $this->baseinfo['tax_rule'];
-
-                        $value['tax_type_id'] = 1;
-                        $value['tax_display_type_id'] = 1;
-
-                        // 4.0.3でtax_rule_idはdeprecated.
-                        $value['tax_rule_id'] = null;
-
-                        // 2.4.4, 2.11, 2.12
-                        if (isset($this->baseinfo) && !empty($this->baseinfo)) {
-                            $value['tax_rate'] = $data['tax_rate'] = $this->baseinfo['tax'];
-                            $data['point_rate'] = $this->baseinfo['point_rate'];
-                        }
-
-                        // 2.4.4
-                        if ($this->flag_244) {
-                            $value['product_class_id'] = $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']];
-                        }
-
-                        if (isset($data['price']) && isset($data['tax_rate'])) {
-                            if ($value['rounding_type_id'] == 2) {
-                                $round = 'floor';
-                            } elseif ($value['rounding_type_id'] == 3) {
-                                $round = 'ceil';
+                        if ($this->flag_4 == false) {
+                            if (isset($data['order_detail_id'])) {
+                                $value['id'] = $data['order_detail_id'];
                             } else {
-                                $round = 'round';
+                                $value['id'] = $i; // 2.4.4
                             }
-                            // Warning: A non-numeric value encountered
-                            $value['tax'] = $round((int)$data['price'] * (int)$data['tax_rate'] / 100);
-                        } else {
-                            $value['tax'] = 0;
-                        }
+                            // dtb_order_detail.tax_ruleははdtb_tax_rule.calc_ruleの値
+                            $value['rounding_type_id'] = isset($data['tax_rule'])
+                                ? $data['tax_rule']
+                                : $this->baseinfo['tax_rule'];
 
-                        $value['order_item_type_id'] = 1; // 商品で固定する
-                        $value['currency_code'] = 'JPY'; // とりあえず固定
+                            $value['tax_type_id'] = 1;
+                            $value['tax_display_type_id'] = 1;
 
-                        if ($this->flag_3) {
-                            // 1行目だけを移行する
-                            $value['shipping_id'] = array_values($this->shipping_id[$data['order_id']])[0];
-                        } else {
-                            if (isset($this->shipping_id[$data['order_id']][0])) {
-                                $value['shipping_id'] = $this->shipping_id[$data['order_id']][0];
+                            // 4.0.3でtax_rule_idはdeprecated.
+                            $value['tax_rule_id'] = null;
+
+                            // 2.4.4, 2.11, 2.12
+                            if (isset($this->baseinfo) && !empty($this->baseinfo)) {
+                                $value['tax_rate'] = $data['tax_rate'] = $this->baseinfo['tax'];
+                                $data['point_rate'] = $this->baseinfo['point_rate'];
+                            }
+
+                            // 2.4.4
+                            if ($this->flag_244) {
+                                $value['product_class_id'] = $this->product_class_id[$data['product_id']][$data['classcategory_id1']][$data['classcategory_id2']];
+                            }
+
+                            if (isset($data['price']) && isset($data['tax_rate'])) {
+                                if ($value['rounding_type_id'] == 2) {
+                                    $round = 'floor';
+                                } elseif ($value['rounding_type_id'] == 3) {
+                                    $round = 'ceil';
+                                } else {
+                                    $round = 'round';
+                                }
+                                // Warning: A non-numeric value encountered
+                                $value['tax'] = $round((int)$data['price'] * (int)$data['tax_rate'] / 100);
                             } else {
-                                $value['shipping_id'] = null; // ダウンロード販売
+                                $value['tax'] = 0;
+                            }
+
+                            $value['order_item_type_id'] = 1; // 商品で固定する
+                            $value['currency_code'] = 'JPY'; // とりあえず固定
+
+                            if ($this->flag_3) {
+                                // 1行目だけを移行する
+                                $value['shipping_id'] = array_values($this->shipping_id[$data['order_id']])[0];
+                            } else {
+                                if (isset($this->shipping_id[$data['order_id']][0])) {
+                                    $value['shipping_id'] = $this->shipping_id[$data['order_id']][0];
+                                } else {
+                                    $value['shipping_id'] = null; // ダウンロード販売
+                                }
                             }
                         }
                         break;
