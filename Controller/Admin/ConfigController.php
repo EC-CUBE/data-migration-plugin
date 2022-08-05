@@ -622,23 +622,8 @@ class ConfigController extends AbstractController
                         } else {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;
                         }
-
-                        // delivery_duration_id
-                        if (isset($data['deliv_date_id'])) {
-                            // delivery_date_id <-- deliv_date_id (dtb_products)
-                            $this->delivery_id[$data['product_id']] = $data['deliv_date_id'];
-                        }
-    
-                        // product_image
-                        if (!empty($data['main_large_image'])) {
-                            $this->product_image[$data['product_id']] = $data['main_large_image'];
-                        } elseif (!empty($data['main_image'])) {
-                            $this->product_image[$data['product_id']] = $data['main_image'];
-                        } elseif (!empty($data['main_list_image'])) {
-                            $this->product_image[$data['product_id']] = $data['main_list_image'];
-                        }
                     } else {
-<                       if ($column == 'id' && $tableName == 'dtb_product') {
+                       if ($column == 'id' && $tableName == 'dtb_product') {
                             $value[$column] = $data['product_id'];
     
                         } elseif ($column == 'id' && $tableName == 'dtb_customer_favorite_product') {
