@@ -481,6 +481,7 @@ class ConfigController extends AbstractController
                 $this->setIdSeq($em, 'dtb_product_image');
                 $this->setIdSeq($em, 'dtb_product_tag');
                 $this->setIdSeq($em, 'dtb_tag');
+                $this->setIdSeq($em, 'dtb_customer_favorite_product');
             }
 
             $em->commit();
