@@ -738,14 +738,14 @@ class ConfigController extends AbstractController
                             // delivery_date_id <-- deliv_date_id (dtb_products)
                             $this->delivery_id[$data['product_id']] = $data['deliv_date_id'];
                         }
-    
+
                         // product_image
                         if (!empty($data['main_large_image'])) {
-                            $this->product_image[$data['product_id']] = $data['main_large_image'];
+                            $this->product_images[$data['product_id']] = [$data['main_large_image']];
                         } elseif (!empty($data['main_image'])) {
-                            $this->product_image[$data['product_id']] = $data['main_image'];
+                            $this->product_images[$data['product_id']] = [$data['main_image']];
                         } elseif (!empty($data['main_list_image'])) {
-                            $this->product_image[$data['product_id']] = $data['main_list_image'];
+                            $this->product_images[$data['product_id']] = [$data['main_list_image']];
                         }
                         for ($sub_image_id=1; $sub_image_id <= 6; $sub_image_id++) {
                             if (!empty($data['sub_large_image' . $sub_image_id])) {
