@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Plugin\DataMigration4\Tests\Web\Admin;
+namespace Plugin\DataMigration42\Tests\Web\Admin;
 
 
 use Eccube\Common\Constant;
@@ -43,8 +43,8 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
     {
         $project_dir = self::$container->getParameter('kernel.project_dir');
 
-        $file = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/'.$v.'.tar.gz';
-        $testFile = $project_dir.'/app/Plugin/DataMigration4/Tests/Fixtures/test.tar.gz';
+        $file = $project_dir.'/app/Plugin/DataMigration42/Tests/Fixtures/'.$v.'.tar.gz';
+        $testFile = $project_dir.'/app/Plugin/DataMigration42/Tests/Fixtures/test.tar.gz';
 
         $fs = new Filesystem();
         $fs->copy($file, $testFile);
@@ -67,18 +67,12 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
 
         $this->client->request(
             'POST',
-            $this->generateUrl('data_migration4_admin_config'),
-            $post
+            $this->generateUrl('data_migration42_admin_config'),
+            $post,
+            ['config' => ['import_file' => $file]]
         );
 
-        //var_dump($this->client->getResponse()->getStatusCode());
-        //var_dump($this->client->getResponse()->getContent());
-
-        //self::assertEquals(Response::HTTP_FOUND, $this->client->getResponse()->getStatusCode());
-        //self::assertTrue($this->client->getResponse()->isRedirect($this->generateUrl('data_migration4_admin_config')));
-
         $customers = $this->entityManager->getRepository(Customer::class)->findAll();
-        var_dump($customers);
         self::assertEquals($c, count($customers));
 
         if ($p > 0) {
