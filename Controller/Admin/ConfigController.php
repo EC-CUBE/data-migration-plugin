@@ -137,17 +137,18 @@ class ConfigController extends AbstractController
                 $this->fix24baseinfo($em, $csvDir);
             }
 
-            $this->flag_3 = false;
-            // 3系の場合
-            if (file_exists($csvDir.'dtb_product.csv')) {
-                $this->flag_3 = true;
-            }
-
-
             $this->flag_4 = false;
             // 4.0/4.1系の場合
             if (file_exists($csvDir.'dtb_order_item.csv')) {
                 $this->flag_4 = true;
+            }
+
+            $this->flag_3 = false;
+            if ($this->flag_4 == false) {
+                // 3系の場合
+                if (file_exists($csvDir.'dtb_product.csv')) {
+                    $this->flag_3 = true;
+                }
             }
 
             // 会員・受注のみ移行
