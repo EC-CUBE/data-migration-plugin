@@ -339,14 +339,18 @@ class ConfigController extends AbstractController
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
                     if ($this->flag_4 == true) {
-                        if ($allow_zero) {
+                        if ($column == 'buy_times') {
+                            $value[$column] = isset($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'creator_id') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
+                        } elseif ($column == 'create_date' || $column == 'update_date') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : date('Y:m:d H:i:s');
+                        } elseif ($column == 'login_date' || $column == 'first_buy_date') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        } elseif ($allow_zero) {
                             $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;
-                        }
-
-                        if ($column == 'buy_times') {
-                            $value[$column] = isset($data[$column]) ? $data[$column] : 0;
                         }
                     } else {
                         if ($column == 'id' && $tableName == 'dtb_customer') { // fixme
@@ -469,7 +473,7 @@ class ConfigController extends AbstractController
                 $this->saveToC($em, $csvDir, 'mtb_product_status', null, true);
                 $this->saveToC($em, $csvDir, 'mtb_sale_type', null, true);
                 $this->saveToP($em, $csvDir, 'dtb_product');
-                $this->saveToO($em, $csvDir, 'dtb_delivery_duration');
+                $this->saveToO($em, $csvDir, 'dtb_delivery_duration', null, true);
                 $this->saveToP($em, $csvDir, 'dtb_product_class');
                 $this->saveToP($em, $csvDir, 'dtb_class_category');
                 $this->saveToP($em, $csvDir, 'dtb_class_name');
@@ -618,7 +622,19 @@ class ConfigController extends AbstractController
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
                     if ($this->flag_4 == true) {
-                        if ($allow_zero) {
+                        if ($column == 'class_category_id1') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        } elseif ($column == 'class_category_id2') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        } elseif ($column == 'stock_unlimited') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'sort_no') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'creator_id') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
+                        } elseif ($column == 'create_date' || $column == 'update_date') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : date('Y:m:d H:i:s');
+                        } elseif ($allow_zero) {
                             $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;
@@ -777,6 +793,8 @@ class ConfigController extends AbstractController
                             } else {
                                 $value['visible'] = !empty($data['del_flg']) ? 0 : 1;
                             }
+                        } else {
+                            $value['visible'] = isset($data['visible']) ? $data['visible'] : 0;
                         }
                         break;
                     case 'dtb_customer_favorite_product':
@@ -1364,7 +1382,25 @@ class ConfigController extends AbstractController
                 // Schemaにあわせた配列を作成する
                 foreach ($listTableColumns as $column) {
                     if ($this->flag_4 == true) {
-                        if ($allow_zero) {
+                        if ($column == 'use_point') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'creator_id') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
+                        } elseif ($column == 'tax_adjust') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'tax') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'tax_rule') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'tax_rate') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'fee') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'create_date' || $column == 'update_date') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : date('Y:m:d H:i:s');
+                        } elseif ($column == 'payment_date' || $column == 'order_date' || $column == 'shipping_date') {
+                            $value[$column] = (!empty($data[$column])) ? $data[$column] : null;
+                        } elseif ($allow_zero) {
                             $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;
@@ -1535,54 +1571,44 @@ class ConfigController extends AbstractController
                         break;
 
                     case 'dtb_shipping':
-                        $value['id'] = $i;
-
-                        if ($this->flag_4 == true) {
-                            $this->shipping_id[$data['order_id']][$data['id']] = $i;
-                        } else {
+                        if ($this->flag_4 == false) {
+                            $value['id'] = $i;
                             $this->shipping_id[$data['order_id']][$data['shipping_id']] = $i;
-                        }
 
-                        if ($this->flag_3) {
-                            if (isset($data['delivery_id']) & strlen($data['delivery_id']) > 0) {
-                                $value['delivery_id'] = $data['delivery_id'];
-                            } else {
-                                $value['delivery_id'] = null;
-                            }
-                            if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
-                                $value['time_id'] = $this->delivery_time[$data['delivery_id']][$data['time_id']];
-                            }
-                        } else {
-                            $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
-                            $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
-                            if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
-                                if (!empty($this->delivery_time)) {
-                                    $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
+                            if ($this->flag_3) {
+                                if (isset($data['delivery_id']) & strlen($data['delivery_id']) > 0) {
+                                    $value['delivery_id'] = $data['delivery_id'];
+                                } else {
+                                    $value['delivery_id'] = null;
                                 }
-                            }
-                            // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
-                            if (!empty($data['shipping_commit_date'])) {
-                                $value['shipping_date'] = $data['shipping_commit_date'];
-                            } elseif (!empty($this->shipping_order[$data['order_id']]['commit_date'])) {
-                                $value['shipping_date'] = $this->shipping_order[$data['order_id']]['commit_date'];
+                                if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
+                                    $value['time_id'] = $this->delivery_time[$data['delivery_id']][$data['time_id']];
+                                }
+                            } else {
+                                $value['delivery_id'] = !empty($this->delivery_id[$value['order_id']]) ? $this->delivery_id[$value['order_id']] : null;
+                                $value['delivery_time'] = empty($data['time']) ? null : $data['time'];
+                                if (isset($data['time_id']) && strlen($data['time_id']) > 0) {
+                                    if (!empty($this->delivery_time)) {
+                                        $value['time_id'] = $this->delivery_time[$value['delivery_id']][$data['time_id']];
+                                    }
+                                }
+                                // dtb_shipping.shipping_commit_dateが空の場合は、dtb_order.commit_dateを使用
+                                if (!empty($data['shipping_commit_date'])) {
+                                    $value['shipping_date'] = $data['shipping_commit_date'];
+                                } elseif (!empty($this->shipping_order[$data['order_id']]['commit_date'])) {
+                                    $value['shipping_date'] = $this->shipping_order[$data['order_id']]['commit_date'];
+                                }
                             }
                         }
 
                         break;
 
                     case 'dtb_tax_rule':
-                        if ($this->flag_4 == true) {
-                            $value['id'] = $data['id'];
-                        } else {
+                        if ($this->flag_4 == false) {
                             $value['id'] = $data['tax_rule_id'];
-                        }
-                        $value['tax_adjust'] = 0;
-                        $value['apply_date'] = self::convertTz($data['apply_date']);
-
-                        if ($this->flag_4 == true) {
-                            $value['rounding_type_id'] = $data['rounding_type_id'];
-                        } else {
+                            $value['apply_date'] = self::convertTz($data['apply_date']);
                             $value['rounding_type_id'] = $data['calc_rule'];
+                            $value['tax_adjust'] = 0;
                         }
 
                         if (isset($data['pref_id']) && $data['pref_id'] === '0') {
@@ -1682,11 +1708,13 @@ class ConfigController extends AbstractController
                         break;
 
                     case 'dtb_mail_history':
-                        $value['id'] = $data['send_id'];
-                        $value['order_id'] = $data['order_id'];
-                        $value['send_date'] = self::convertTz($data['send_date']);
-                        $value['mail_subject'] = $data['subject'];
-                        $value['mail_body'] = $data['mail_body'];
+                        if ($this->flag_4 == false) {
+                            $value['id'] = $data['send_id'];
+                            $value['order_id'] = $data['order_id'];
+                            $value['send_date'] = self::convertTz($data['send_date']);
+                            $value['mail_subject'] = $data['subject'];
+                            $value['mail_body'] = $data['mail_body'];
+                        }
 
                         break;
 
