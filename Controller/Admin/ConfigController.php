@@ -165,7 +165,7 @@ class ConfigController extends AbstractController
             $fs = new Filesystem();
             $fs->remove($tmpDir);
 
-            return $this->redirectToRoute('data_migration4_admin_config');
+            return $this->redirectToRoute('data_migration42_admin_config');
         }
 
         return [
