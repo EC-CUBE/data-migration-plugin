@@ -347,6 +347,8 @@ class ConfigController extends AbstractController
                             $value[$column] = !empty($data[$column]) ? $data[$column] : date('Y:m:d H:i:s');
                         } elseif ($column == 'login_date' || $column == 'first_buy_date') {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;
+                        } elseif ($column == 'point') {
+                            $value[$column] = empty($data[$column]) ? 0 : (int) $data[$column];
                         } elseif ($allow_zero) {
                             $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
@@ -401,7 +403,7 @@ class ConfigController extends AbstractController
                         } elseif ($column == 'secret_key') { // 実験
                             $value[$column] = mt_rand();
                         } elseif ($column == 'point') {
-                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                            $value[$column] = empty($data[$column]) ? 0 : (int) $data[$column];
                         } elseif ($column == 'salt') {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;  // @see https://github.com/EC-CUBE/data-migration-plugin/issues/38
                         } elseif ($column == 'creator_id') {
@@ -634,6 +636,10 @@ class ConfigController extends AbstractController
                             $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
                         } elseif ($column == 'create_date' || $column == 'update_date') {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : date('Y:m:d H:i:s');
+                        } elseif ($column == 'display_order_count') {
+                            $value[$column] = empty($data[$column]) ? 0 : $data[$column];
+                        } elseif ($column == 'visible') {
+                            $value[$column] = empty($data[$column]) ? 0 : $data[$column];
                         } elseif ($allow_zero) {
                             $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
@@ -642,10 +648,10 @@ class ConfigController extends AbstractController
                     } else {
                        if ($column == 'id' && $tableName == 'dtb_product') {
                             $value[$column] = $data['product_id'];
-    
+
                         } elseif ($column == 'id' && $tableName == 'dtb_customer_favorite_product') {
                             $value[$column] = $i;
-    
+
                         } elseif ($column == 'product_status_id') {
                             // 退会が追加された
                             $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
@@ -653,7 +659,7 @@ class ConfigController extends AbstractController
                             $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
                         } elseif ($column == 'name') {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : '';
-    
+
                         // カラム名が違うので
                         } elseif ($column == 'description_list') {
                             $value[$column] = isset($data['main_list_comment'])
@@ -674,19 +680,19 @@ class ConfigController extends AbstractController
                                 .$data['sub_title4']."\n".$data['sub_comment4']."\n"
                                 .$data['sub_title5']."\n".$data['sub_comment5']."\n"
                                 ;
-    
+
                         // ---> dtb_product_class
                         } elseif ($column == 'sale_type_id') {
                             $value[$column] = isset($data['product_type_id']) ? $data['product_type_id'] : 1;
                         } elseif ($column == 'class_category_id1') {
                             $value[$column] = !empty($data['classcategory_id1']) ? $data['classcategory_id1'] : null;
-    
+
                             if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
                                 $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id1'];
                             }
                         } elseif ($column == 'class_category_id2') {
                             $value[$column] = !empty($data['classcategory_id2']) ? $data['classcategory_id2'] : null;
-    
+
                             if (!empty($this->dtb_class_combination) && !empty($data['class_combination_id'])) {
                                 $value[$column] = $this->dtb_class_combination[$data['class_combination_id']]['classcategory_id2'];
                             }
@@ -696,11 +702,11 @@ class ConfigController extends AbstractController
                             $value[$column] = isset($data['stock']) && $data['stock'] !== ''
                                 ? $data['stock']
                                 : null;
-    
+
                             // dtb_product_stock
                             // todo 2.4系の場合、データが足りない
                             $this->stock[$data['product_class_id']] = $value[$column];
-    
+
                         // class_category
                         } elseif ($column == 'class_category_id') {
                             $value[$column] = !empty($data['classcategory_id']) ? $data['classcategory_id'] : 0;
@@ -713,7 +719,7 @@ class ConfigController extends AbstractController
                         } elseif ($column == 'creator_id') {
                             $value[$column] = null; // 固定
                         } elseif ($column == 'stock_unlimited') {
-                            $value[$column] = isset($data[$column]) ? $data[$column] : 1;
+                            $value[$column] = empty($data[$column]) ? 0 : 1;
                         } elseif ($column == 'sort_no') {
                             $value[$column] = $data['rank'];
                         } elseif ($column == 'hierarchy') {
@@ -749,7 +755,7 @@ class ConfigController extends AbstractController
                         } else {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : null;
                         }
-    
+
                         // delivery_duration_id
                         if (isset($data['deliv_date_id'])) {
                             // delivery_date_id <-- deliv_date_id (dtb_products)
@@ -794,7 +800,7 @@ class ConfigController extends AbstractController
                                 $value['visible'] = !empty($data['del_flg']) ? 0 : 1;
                             }
                         } else {
-                            $value['visible'] = isset($data['visible']) ? $data['visible'] : 0;
+                            $value['visible'] = empty($data['visible']) ? 0 : (int) $data['visible'];
                         }
                         break;
                     case 'dtb_customer_favorite_product':
@@ -1400,6 +1406,12 @@ class ConfigController extends AbstractController
                             $value[$column] = !empty($data[$column]) ? $data[$column] : date('Y:m:d H:i:s');
                         } elseif ($column == 'payment_date' || $column == 'order_date' || $column == 'shipping_date') {
                             $value[$column] = (!empty($data[$column])) ? $data[$column] : null;
+                        } elseif ($column == 'add_point') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'visible') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                        } elseif ($column == 'quantity') {
+                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
                         } elseif ($allow_zero) {
                             $value[$column] = isset($data[$column]) ? $data[$column] : null;
                         } else {
@@ -1415,13 +1427,13 @@ class ConfigController extends AbstractController
                         } elseif ($column == 'id' && $tableName == 'dtb_delivery_time') {
                             // deliv_idとtime_idで複合主キーだったのが、idのみの主キーとなったため、連番で付与する.
                             $value[$column] = $i;
-    
+
                             // dtb_order.deliv_idとdtb_shipping.time_idでお届け時間を特定するため、ここで保持しておく.
                             $this->delivery_time[$data['deliv_id']][$data['time_id']] = $i;
                         } elseif ($column == 'order_status_id') {
                             // 退会が追加された
                             $value[$column] = ($data['del_flg'] == 1) ? '3' : $data['status'];
-    
+
                             // 4系に存在しないstatusなので
                             if ($data['status'] == 2) {
                                 $value[$column] = 4;
@@ -1449,7 +1461,7 @@ class ConfigController extends AbstractController
                             $value[$column] = empty($data['pref']) ? null : $data['pref'];
                         } elseif ($column == 'delivery_fee_total') {
                             $value[$column] = empty($data['deliv_fee']) ? 0 : $data['deliv_fee'];
-    
+
                         // --> shipping
                         } elseif ($column == 'delivery_date') {
                             $value[$column] = empty($data['date']) ? null : $data['date'];
@@ -1457,7 +1469,7 @@ class ConfigController extends AbstractController
                             $value[$column] = empty($data['commit_date']) ? null : self::convertTz($data['commit_date']);
                         } elseif ($column == 'visible' /*&& $tableName == 'dtb_payment'*/) {
                             $value[$column] = 0;
-    
+
                         // --> deliv
                         } elseif ($column == 'sale_type_id') {
                             $value[$column] = isset($data['product_type_id']) ? $data['product_type_id'] : 1;
@@ -1511,7 +1523,7 @@ class ConfigController extends AbstractController
                         } elseif ($column == 'creator_id') {
                             $value[$column] = !empty($data[$column]) ? $data[$column] : 1;
                         } elseif ($column == 'charge' || $column == 'use_point' || $column == 'add_point' || $column == 'discount' || $column == 'total' || $column == 'subtotal' || $column == 'tax' || $column == 'payment_total') {
-                            $value[$column] = !empty($data[$column]) ? $data[$column] : 0;
+                            $value[$column] = !empty($data[$column]) ? (int) $data[$column] : 0;
                         } elseif ($column == 'tax_adjust') {
                             $value['tax_adjust'] = 0; // 0固定
                         } elseif ($column == 'discriminator_type') {
