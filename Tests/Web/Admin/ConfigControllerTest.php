@@ -33,6 +33,8 @@ class ConfigControllerTest extends AbstractAdminWebTestCase
             ['2_13_5', 1, 3, 2],
             ['3_0_9', 1, 2, 6],
             ['3_0_18', 1, 2, 4],
+            ['4_0_6', 1, 12, 20],
+            ['4_1_2', 1, 12, 20],
         ];
     }
 
