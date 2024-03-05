@@ -10,7 +10,7 @@ use Eccube\Service\PluginService;
 use Eccube\Util\StringUtil;
 use nobuhiko\BulkInsertQuery\BulkInsertQuery;
 use Plugin\DataMigration42\Form\Type\Admin\ConfigType;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
