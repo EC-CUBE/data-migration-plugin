@@ -401,7 +401,7 @@ class ConfigController extends AbstractController
                         } elseif ($column == 'login_date' || $column == 'first_buy_date') {
                             $value[$column] = (!empty($data[$column]) && $data[$column] != '0000-00-00 00:00:00') ? self::convertTz($data[$column]) : null;
                         } elseif ($column == 'secret_key') { // 実験
-                            $value[$column] = mt_rand();
+                            $value[$column] = uniqid('secret_key_'.mt_rand().'.', true);
                         } elseif ($column == 'point') {
                             $value[$column] = empty($data[$column]) ? 0 : (int) $data[$column];
                         } elseif ($column == 'salt') {
